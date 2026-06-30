@@ -13,7 +13,24 @@ import { createBooking, fetchAvailability } from "@/lib/availability";
  * availability and writes bookings through lib/availability (a mock until
  * Phase 4 swaps in the real API).
  */
-export default function BookingDiary() {
+export type DiaryConfig = {
+  openHour: number;
+  closeHour: number;
+  minHours: number;
+  maxHours: number;
+  resetHours: number;
+  daysAhead: number;
+  prices: Record<number, number>;
+  bacs: {
+    accountName: string;
+    sortCode: string;
+    accountNo: string;
+    referencePrefix: string;
+    demo: boolean;
+  };
+};
+
+export default function BookingDiary({ config }: { config: DiaryConfig }) {
   const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -46,25 +63,16 @@ export default function BookingDiary() {
       "November",
       "December",
     ];
-    const START_HOUR = 7,
-      END_HOUR = 22;
+    const START_HOUR = config.openHour,
+      END_HOUR = config.closeHour;
     const HOURS_PER_DAY = END_HOUR - START_HOUR;
-    const MIN_RUN = 1,
-      MAX_RUN = 8,
-      RESET_HOURS = 1;
-    const DAYS_AHEAD = 28;
-    const PRICE: Record<number, number> = {
-      1: 45,
-      2: 80,
-      3: 110,
-      4: 140,
-      5: 170,
-      6: 200,
-      7: 225,
-      8: 250,
-    };
+    const MIN_RUN = config.minHours,
+      MAX_RUN = config.maxHours,
+      RESET_HOURS = config.resetHours;
+    const DAYS_AHEAD = config.daysAhead;
+    const PRICE: Record<number, number> = config.prices;
     const priceFor = (h: number) =>
-      PRICE[h] != null ? PRICE[h] : Math.round(h * 45);
+      PRICE[h] != null ? PRICE[h] : Math.round(h * (PRICE[1] ?? 45));
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -145,7 +153,6 @@ export default function BookingDiary() {
       bacsRef = $("bacs-ref"),
       bacsAmt = $("bacs-amt"),
       payBtn = $("pay-confirm");
-    let payRef: string | null = null;
 
     const ac = new AbortController();
     const signal = ac.signal;
@@ -154,6 +161,13 @@ export default function BookingDiary() {
       const x = new Date(today);
       x.setDate(today.getDate() + d);
       return x;
+    };
+    const pad2 = (n: number) => String(n).padStart(2, "0");
+    const isoOf = (d: number) => {
+      const x = dateFor(d);
+      return (
+        x.getFullYear() + "-" + pad2(x.getMonth() + 1) + "-" + pad2(x.getDate())
+      );
     };
     const ordinal = (n: number) => {
       const s = ["th", "st", "nd", "rd"],
@@ -644,12 +658,9 @@ export default function BookingDiary() {
     if (emailInput)
       emailInput.addEventListener("input", refreshPay, { signal });
 
-    const genRef = () =>
-      "S1-" + Date.now().toString(36).toUpperCase().slice(-6);
     const openPay = () => {
       if (sel.start === null) return;
-      payRef = genRef();
-      if (bacsRef) bacsRef.textContent = payRef;
+      if (bacsRef) bacsRef.textContent = "Assigned when you reserve";
       if (bacsAmt) bacsAmt.textContent = money(priceFor(sel.end! - sel.start));
       if (stepPay) (stepPay as HTMLElement).hidden = false;
       if (confirmBtn) (confirmBtn as HTMLElement).hidden = true;
@@ -657,14 +668,11 @@ export default function BookingDiary() {
       if (nameInput) nameInput.focus({ preventScroll: true });
       if (live)
         live.textContent =
-          "Payment details ready. Enter your name and email, transfer the amount with reference " +
-          payRef +
-          ", then confirm.";
+          "Enter your name and email, then reserve the slot — your reference and bank details appear next.";
     };
     const closePay = () => {
       if (stepPay) (stepPay as HTMLElement).hidden = true;
       if (confirmBtn) (confirmBtn as HTMLElement).hidden = false;
-      payRef = null;
     };
 
     if (confirmBtn)
@@ -697,7 +705,7 @@ export default function BookingDiary() {
     const renderPending = (p: {
       name: string;
       email: string;
-      ref: string;
+      reference: string;
       day: string;
       start: string;
       end: string;
@@ -716,35 +724,51 @@ export default function BookingDiary() {
           "</strong>. Nothing’s confirmed until that email arrives.</p>" +
           '<dl class="booked-meta">' +
           "<div><dt>Slot</dt><dd>" +
-          p.day +
+          esc(p.day) +
           " · " +
           p.start +
           "–" +
           p.end +
           "</dd></div>" +
           '<div><dt>Reference</dt><dd class="mark">' +
-          p.ref +
+          esc(p.reference) +
           "</dd></div>" +
           '<div><dt>Amount</dt><dd class="mark">' +
           money(p.price) +
           "</dd></div>" +
           "</dl>" +
-          '<p class="booked-fine">Haven’t sent it yet? Transfer ' +
+          '<dl class="booked-meta">' +
+          "<div><dt>Account name</dt><dd>" +
+          esc(config.bacs.accountName) +
+          "</dd></div>" +
+          "<div><dt>Sort code</dt><dd>" +
+          esc(config.bacs.sortCode) +
+          "</dd></div>" +
+          "<div><dt>Account no.</dt><dd>" +
+          esc(config.bacs.accountNo) +
+          "</dd></div>" +
+          "</dl>" +
+          '<p class="booked-fine">Transfer <strong>' +
           money(p.price) +
-          " with reference " +
-          p.ref +
-          '. Something to ask first? <a href="mailto:hello@studioone.room?subject=' +
-          encodeURIComponent("Booking " + p.ref + " — StudioONE") +
+          "</strong> to the account above using reference <strong>" +
+          esc(p.reference) +
+          "</strong> so we can match it. Something to ask first? " +
+          '<a href="mailto:hello@studioone.room?subject=' +
+          encodeURIComponent("Booking " + p.reference + " — StudioONE") +
           '">Message the studio</a>.</p>' +
           "</div>";
       }
       if (summary)
         summary.innerHTML =
-          '<span class="empty">Payment flagged — your code will be emailed once it clears.</span>';
+          '<span class="empty">Reserved — your code will be emailed once payment clears.</span>';
       if (live)
         live.textContent =
-          "Payment flagged. Reference " +
-          p.ref +
+          "Reserved. Reference " +
+          p.reference +
+          ". Transfer " +
+          money(p.price) +
+          " to " +
+          config.bacs.accountName +
           ". Your door code will be emailed to " +
           p.email +
           " once it clears.";
@@ -760,16 +784,45 @@ export default function BookingDiary() {
           const payload = {
             name: nameInput!.value.trim(),
             email: emailInput!.value.trim(),
-            ref: payRef!,
-            day: dayLabel(sel.dayIdx!),
-            start: hourLabel(sel.start!),
-            end: hourLabel(sel.end!),
-            hours: hours,
-            price: priceFor(hours),
+            dateISO: isoOf(sel.dayIdx!),
+            startHour: clockOf(sel.start!),
+            hours,
           };
+          const dayIdx = sel.dayIdx!,
+            startIdx = sel.start!,
+            endIdx = sel.end!;
           payBtn.setAttribute("aria-disabled", "true");
-          payBtn.innerHTML = "Sending…";
-          createBooking(payload).then(() => renderPending(payload));
+          payBtn.innerHTML = "Reserving…";
+          createBooking(payload).then((res) => {
+            if (res.ok) {
+              renderPending({
+                name: payload.name,
+                email: payload.email,
+                reference: res.reference || "",
+                day: dayLabel(dayIdx),
+                start: hourLabel(startIdx),
+                end: hourLabel(endIdx),
+                price: (res.amountPence ?? priceFor(hours) * 100) / 100,
+              });
+            } else {
+              payBtn.removeAttribute("aria-disabled");
+              payBtn.innerHTML =
+                'I’ve sent the payment <span class="ar" aria-hidden="true">→</span>';
+              if (live)
+                live.textContent =
+                  res.error === "unavailable"
+                    ? "Sorry — that slot was just taken. Please pick another."
+                    : "Something went wrong. Please try again.";
+              if (res.error === "unavailable") {
+                fetchAvailability().then((d) => {
+                  BOOKINGS = d || {};
+                  build();
+                  buildDays();
+                  chooseDay(dayIdx);
+                });
+              }
+            }
+          });
         },
         { signal },
       );
@@ -785,7 +838,7 @@ export default function BookingDiary() {
     return () => {
       ac.abort();
     };
-  }, []);
+  }, [config]);
 
   return (
     <>
@@ -926,23 +979,24 @@ export default function BookingDiary() {
                   </div>
                 </div>
                 <div className="pay">
-                  {/* PLACEHOLDER bank details — swap for the real account before launch */}
                   <dl className="bacs">
                     <div className="bacs-h">
                       <span>Pay by bank transfer</span>
-                      <span className="demo">Demo details</span>
+                      {config.bacs.demo ? (
+                        <span className="demo">Demo details</span>
+                      ) : null}
                     </div>
                     <div className="bacs-row">
                       <dt>Account name</dt>
-                      <dd>StudioONE</dd>
+                      <dd>{config.bacs.accountName}</dd>
                     </div>
                     <div className="bacs-row">
                       <dt>Sort code</dt>
-                      <dd>00-00-00</dd>
+                      <dd>{config.bacs.sortCode}</dd>
                     </div>
                     <div className="bacs-row">
                       <dt>Account no.</dt>
-                      <dd>0000&nbsp;0000</dd>
+                      <dd>{config.bacs.accountNo}</dd>
                     </div>
                     <div className="bacs-row ref">
                       <dt>Reference</dt>
@@ -954,11 +1008,11 @@ export default function BookingDiary() {
                     </div>
                   </dl>
                   <p className="pay-note">
-                    Send the <strong>exact amount</strong> using the{" "}
-                    <strong>reference above</strong> so the studio can match
-                    your payment. Then press the button below to let us know
-                    it&apos;s on the way — your slot holds the moment you do,
-                    and the door code is emailed once the transfer clears.
+                    Enter your name and email, then press reserve to hold the
+                    slot. Your <strong>reference</strong> and these bank details
+                    appear on the next screen — transfer the{" "}
+                    <strong>exact amount</strong> with that reference, and the
+                    door code is emailed once it clears.
                   </p>
                   <button
                     type="button"
