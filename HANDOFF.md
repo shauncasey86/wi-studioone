@@ -9,15 +9,16 @@
 
 ## Status
 
-- **Stages complete:** Phase 0 (Scaffold & repo), Phase 1 (Port the static site).
-- **Stage just finished:** Phase 1.
-- **Stage next:** Phase 2 — Content model + seed.
+- **Stages complete:** Phase 0 (Scaffold), Phase 1 (Static port), Phase 2
+  (Content model + seed).
+- **Stage just finished:** Phase 2.
+- **Stage next:** Phase 3 — Admin + CMS.
 
 ### Full stage plan (from CLAUDE.md §14)
 
 - [x] **Phase 0 — Scaffold & repo**
 - [x] **Phase 1 — Port the static site**
-- [ ] **Phase 2 — Content model + seed**
+- [x] **Phase 2 — Content model + seed**
 - [ ] **Phase 3 — Admin + CMS**
 - [ ] **Phase 4 — Bookings backend**
 - [ ] **Phase 5 — Booking management + door code**
@@ -30,134 +31,134 @@
 ### Local
 
 ```bash
-npm install                       # installs deps; postinstall runs `prisma generate`
-cp .env.example .env              # set DATABASE_URL (+ others as phases need them)
-npm run prisma:migrate            # apply migrations to your dev Postgres
+npm install                       # postinstall runs `prisma generate`
+cp .env.example .env              # set DATABASE_URL
+npm run prisma:migrate            # apply migrations (init + content_model)
+npm run db:seed                   # load today's copy into the DB (idempotent)
 npm run dev                       # http://localhost:3000
 ```
 
-The public site renders without a database in Phase 1 (content is still
-hardcoded). `GET /api/health` needs `DATABASE_URL` and returns
-`{"status":"ok","database":"connected"}`.
+The site now renders **from the database** — without a seeded `SiteSettings`
+row the page errors (it `findUniqueOrThrow`s), so `db:seed` is required before
+the site renders. `GET /api/health` returns `{"status":"ok","database":"connected"}`.
 
-### Deploy (Railway) — LIVE ✅
+### Deploy (Railway) — LIVE ✅ (needs a one-time seed for Phase 2)
 
-Service `wi-studioone` + Postgres plugin are provisioned and the deploy is green
-at https://wi-studioone.up.railway.app. Railway builds **`main`** with Nixpacks;
-each stage's branch must be merged to `main` to ship (the established flow:
-develop on the stage branch → PR → merge to `main` → Railway redeploys).
-Deploy essentials, learned in Phase 0 (keep in mind):
+Service `wi-studioone` + Postgres are live; Railway builds **`main`** with
+Nixpacks. **Merge this branch into `main`** to ship. The release command runs
+`prisma migrate deploy` (applies the new `content_model` migration) but **does
+NOT seed** — seeding every release would clobber admin edits once Phase 3 lands.
+So after the Phase 2 deploy, **run the seed once** against the Railway DB, e.g.:
 
-- Node is pinned to 22 via `.nvmrc` + `package.json` `engines` (Nixpacks would
-  otherwise default to Node 18, too old for Next.js 16).
-- `DATABASE_URL` on the service MUST be a reference to the Postgres plugin
-  (`${{Postgres.DATABASE_URL}}`), not a hand-typed/example string — the start
-  command runs `prisma migrate deploy`.
+```bash
+railway run npm run db:seed         # or a Railway one-off command / shell
+```
 
-Full Railway/Resend/DNS steps: `README.md`.
+Until that runs, the deployed page will 500 (health stays green). Deploy
+essentials from earlier phases still apply (Node pinned to 22 via `.nvmrc` +
+engines; `DATABASE_URL` must reference the Postgres plugin).
 
 ### ⚠️ Environment note (Prisma engines behind a proxy)
 
-`prisma generate` downloads native engines from `binaries.prisma.sh`. On Railway
-and normal networks this just works. In a restricted sandbox/agent proxy the
-download can be reset (`ECONNRESET`); fetch them once with
-`curl --cacert /root/.ccr/ca-bundle.crt` and point Prisma at them via
-`PRISMA_QUERY_ENGINE_LIBRARY` / `PRISMA_SCHEMA_ENGINE_BINARY` + the engine hash
-from `node_modules/@prisma/engines-version/package.json` (target
-`debian-openssl-3.0.x`). Sandbox-only — never commit those env vars.
+`prisma generate`/`migrate` download native engines from `binaries.prisma.sh`.
+On Railway/normal networks this just works; in the restricted sandbox the
+download resets (`ECONNRESET`). Fetch them once with
+`curl --cacert /root/.ccr/ca-bundle.crt` (engine hash from
+`node_modules/@prisma/engines-version/package.json`, target
+`debian-openssl-3.0.x`) and point Prisma at them via `PRISMA_QUERY_ENGINE_LIBRARY`
+/ `PRISMA_SCHEMA_ENGINE_BINARY` + `NODE_EXTRA_CA_CERTS`. Also set `DATABASE_URL`
+for `next build` (a local Postgres is fine). Sandbox-only — never commit these.
 
 ---
 
-## Last stage — Phase 1 (what was built)
+## Last stage — Phase 2 (what was built)
 
-The full site ported from `legacy/studioone.html`, pixel- and behaviour-faithful,
-with hardcoded content (Phase 2 makes it DB-driven).
+The public site is now rendered from Postgres; the Phase-1 hardcoded copy lives
+in the database.
 
-- **`app/globals.css`** — the legacy `<style>` block ported **verbatim** (only
-  `--serif`/`--mono` rewired to the next/font variables). Kept out of Prettier
-  (`.prettierignore`) to stay byte-faithful. No utility framework.
-- **`app/layout.tsx`** — `next/font` for **Fraunces** (variable: `opsz`, `SOFT`,
-  `WONK` axes + italic) and **Space Mono** (400/700 + italic), exposed as CSS
-  vars. Full `<head>` metadata ported (title/description/canonical/OG/Twitter,
-  theme-color, inline SVG favicon/apple/mask icons).
-- **`app/page.tsx`** — every section as static server-rendered markup: topbar,
-  hero (+ day-arc SVG skeleton), §01 manifesto, §02 five kinds, §03 statement
-  band, §04 how, §05 diary header, §06 practical (room facts, changeover docket,
-  rates, policies, OSM map), CTA, footer. Plus the cursor nodes.
-- **`components/SiteEffects.tsx`** (client) — ports Lenis smooth scroll, topbar
-  pin, the custom cursor, the hero day-arc (`buildArc`), the live status clock,
-  the changeover reset stamp, and the GSAP/ScrollTrigger reveals (hero timeline,
-  manifesto word reveal, chapter chrome, step + footer drift). GSAP + Lenis are
-  **bundled from npm** (gsap 3.12.5, lenis 1.3.23) — CDN `<script>` tags dropped.
-  `prefers-reduced-motion` honoured; teardown via AbortController + tracked rAF.
-- **`components/BookingDiary.tsx`** (client) — faithful port of the calendar
-  logic: four-week radiogroup with roving tabindex, part-of-day start grouping,
-  length presets + hourly stepper, summary/price, the BACS payment step, and the
-  pending panel. Same ARIA (`aria-checked`/`aria-pressed`), live region, and
-  focus management as the original. Date-dependent building runs after mount, so
-  there's no SSR/timezone hydration drift.
-- **`lib/availability.ts`** — the mock service layer (`fetchAvailability` /
-  `createBooking`) shared by the diary and the arc. Phase 4 swaps the bodies for
-  the real API; the UI doesn't change.
+- **`prisma/schema.prisma`** — the full §5 model replaces the `HealthCheck`
+  placeholder: `SiteSettings` (JSON `content` + operational settings + `bacs`/
+  `contact`/`map` JSON + door code/emails), the reorderable list tables (`Kind`,
+  `HowStep`, `Policy`, `RoomFact`, `ChangeoverItem`, `NavItem`, `FooterColumn`,
+  `HeroEyebrow`, `ManifestoFoot`, `RateTier`, `MediaAsset`), and
+  `Booking`/`Block`/`RecurringHold`/`AdminUser` (tables only; behaviour in
+  Phases 4–5). Migration: `prisma/migrations/20260630112755_content_model/`.
+  (`NavItem` has an extra `cur` field for the cursor label — §5 is a sketch.)
+- **`lib/content.ts`** — zod schemas (§6) for the `content` JSON + `bacs`/
+  `contact`/`map`, `.strict()` (rejects unknown fields), with inferred TS types.
+- **`lib/richtext.tsx`** — the safe rich-text renderer for the `*italic*` /
+  `**bold**` convention, plus `[label](href)` links (needed by the rates note).
+  Escaping is by construction (React escapes string children); link hrefs are
+  scheme-checked.
+- **`lib/site-data.ts`** — `getSiteData()` (React `cache()`d): one round-trip
+  for the settings singleton (JSON columns zod-validated) + every list, ordered.
+- **`components/sections/*`** — each section is now an async server component
+  reading `getSiteData()` and rendering rich fields via `rich()`: `Topbar`,
+  `Hero`, `Manifesto`, `Days`, `RoomStatement`, `How`, `DiarySection`,
+  `Practical`, `CtaStrip`, `Footer`. `app/page.tsx` composes them and is
+  `force-dynamic` (renders from the DB at request, not at build).
+- **`app/layout.tsx`** — `generateMetadata`/`generateViewport` now read
+  `content.meta` from the DB (with a static fallback so `next build` is safe
+  without a DB). Fonts unchanged.
+- **`prisma/seed.ts`** — idempotent seed loading today's exact copy (re-running
+  replaces the content singleton + all list rows; never touches bookings).
+- `<BookingDiary/>` is unchanged (still client + mock service); Phase 4 wires it
+  to the real API. Its BACS panel is still hardcoded — it reads
+  `SiteSettings.bacs` once the booking API exists.
 
 ---
 
-## Verify (Phase 1 gate) — ✅ PASSED
+## Verify (Phase 2 gate) — ✅ PASSED
 
-`npm run lint`, `npm run format:check`, and `npm run build` all pass. Behaviour +
-visual parity was verified with the preinstalled Chromium (Playwright):
+`npm run lint`, `npm run format:check`, `npm run build` all pass (build with
+`DATABASE_URL` set, as on Railway). Against a local seeded Postgres:
 
-- **Full-page screenshots at 1440px and 390px** (reduced-motion so every reveal
-  is shown) — hero, §01–§04, the diary, §06, CTA, footer all render faithfully
-  in the umber/oat/marigold palette with Fraunces/Space Mono.
-- **Diary walk-through** confirmed the engine rules from `legacy`: today
-  auto-selected; past hours excluded (no 07:00–11:00 on today); the 14:00–16:00
-  booking + 1h reset buffer correctly removed 13:00 (the `+` stepper capped at
-  1h there); presets/stepper price correctly (17:00–19:00 · 2h · £80); Continue
-  → payment generates a BACS reference (`S1-…`); valid name+email enables the pay
-  button; flagging payment renders the "Awaiting payment" pending panel and
-  announces it in the live region.
+- **Renders identically from the DB** — a full-page screenshot at 1440px matches
+  the Phase-1 render exactly (same 1440×7504 layout, palette, type, diary).
+- **HTML spot-checks** confirm faithful markup: hero `the <em>hour.</em>`, the
+  manifesto word spans incl. `<span class="w"><em>sit ten for dinner.</em></span>`,
+  `Bare. Daylit. <em>Looked after.</em>`, policy `<strong>24 hours</strong>`,
+  room-fact spacing (`<b>~40 m²</b> ground floor` with a real nbsp vs
+  `<b>Kettle</b>, fridge, sink` with none), rate tiers `<li>1h <b>£45</b></li>`,
+  the rates-note `[Message the studio](mailto:…)` link, nav `data-cur`, and the
+  `Open · 07:00–22:00` status line.
+- **Seed is idempotent** (counts stable on re-run) and **/api/health** is green.
 
-To re-verify: `npm run build` then `npm run start`, open the site, and exercise
-the diary. (A pixel diff *against* `legacy/studioone.html` can't run in the
-sandbox because the legacy file's CDN deps — unpkg/cdnjs/Google Fonts — are
-blocked by the egress proxy; the new site bundles them, so compare against the
-legacy file on a normal network if a strict diff is wanted. The OSM map iframe is
-also blocked in-sandbox and shows a dark frame; it loads on the real deploy.)
+To re-verify: `prisma:migrate`, `db:seed`, `build`, `start`, open the site.
 
 ---
 
 ## Open questions (need owner decision/action)
 
-1. **Admin session lib:** CLAUDE.md says pick `iron-session` or Auth.js and
-   justify. Default plan: `iron-session` (simplest for a single owner; no OAuth
-   needed). Confirm or override in Phase 3.
-2. **Image storage:** Cloudflare R2 vs Railway persistent volume (CLAUDE.md §3).
-   Decide before Phase 3 (image upload).
-3. **OG image:** still the legacy Unsplash URL; replace with a real StudioONE OG
-   image (becomes editable in Phase 3).
-4. **Door-code model:** single rotating code is the decided scope (CLAUDE.md §2);
-   per-guest codes remain out of scope.
+1. **Railway one-time seed (Phase 2):** after merging, run `npm run db:seed`
+   once against the Railway DB (see Run & deploy). The release does not auto-seed.
+2. **Admin session lib (Phase 3):** plan is `iron-session` (simplest single
+   owner; no OAuth). Confirm or override.
+3. **Image storage (Phase 3):** Cloudflare R2 vs Railway volume (CLAUDE.md §3).
+4. **OG image:** still the legacy Unsplash URL (in `content.meta.ogImage`);
+   replace with a real StudioONE image (editable in Phase 3).
+5. **Door-code model:** single rotating code is the decided scope (CLAUDE.md §2).
 
 ---
 
 ## Next stage — verbatim (copy-paste as the next session's brief)
 
-**Phase 2 — Content model + seed.** Prisma schema (§5), zod content schema (§6),
-seed from current copy, render sections from the DB.
+**Phase 3 — Admin + CMS.** Auth, content editors for every section incl.
+add/remove/reorder, image upload, map pin, pricing/rules.
 
-**Gate:** site renders identically from the database.
+**Gate:** every section in §6 is editable and changes show live.
 
-Detail: build the full data model from CLAUDE.md §5 (replace the Phase-0
-`HealthCheck` placeholder) — `SiteSettings` (typed JSON `content` validated by a
-zod schema covering §6, plus the operational/BACS/door-code/contact/map fields)
-and the reorderable list tables (`Kind`, `HowStep`, `Policy`, `RoomFact`,
-`ChangeoverItem`, `NavItem`, `FooterColumn`, `HeroEyebrow`, `ManifestoFoot`,
-`RateTier`, `MediaAsset`), plus `Booking`/`Block`/`RecurringHold`/`AdminUser`
-(tables can land now; their behaviour is wired in Phases 4–5). Write the
-idempotent seed (`prisma/seed.ts`) that loads today's exact copy from
-`legacy/studioone.html` / current `app/page.tsx`. Convert the Phase-1 static
-sections into server components that read `SiteSettings` + their list tables, and
-render rich fields through the safe `*italic*` / `**bold**` parser (§5 markup
-convention: escape HTML first, then convert only those two markers). After this,
-a fresh DB seed must render byte-for-byte what Phase 1 renders today.
+Detail (CLAUDE.md §10): build `/admin`, gated by middleware. Login page →
+bcrypt-check against the single `AdminUser` → signed HTTP-only same-site session
+cookie (iron-session unless overridden); logout; rate-limit login. Seed the
+`AdminUser` from `ADMIN_EMAIL`/`ADMIN_PASSWORD` (bcrypt hash; password used at
+seed-time only). A content editor with a form per §6 section: scalar fields write
+through the zod `content` schema; the list tables support add / remove /
+drag-to-reorder (persist `order`); rich fields use the `*italic*`/`**bold**`
+convention with a live preview; image upload (OG/favicon/section images) to the
+object store → `MediaAsset`. Map-pin editor (lat/lng/zoom/tag/coords/openMapsUrl
+→ the OSM embed). Pricing & rules editor (RateTier prices + operational
+settings). Saving must revalidate the public route so changes show live
+(the page is `force-dynamic`, so a fresh request already reflects DB writes;
+still call `revalidatePath('/')` where caching is added). Validate every input
+with zod; gate every admin route + mutation; CSRF + same-site cookies.
