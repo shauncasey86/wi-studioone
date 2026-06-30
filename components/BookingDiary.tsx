@@ -807,7 +807,7 @@ export default function BookingDiary({ config }: { config: DiaryConfig }) {
             } else {
               payBtn.removeAttribute("aria-disabled");
               payBtn.innerHTML =
-                'I’ve sent the payment <span class="ar" aria-hidden="true">→</span>';
+                'Reserve the room <span class="ar" aria-hidden="true">→</span>';
               if (live)
                 live.textContent =
                   res.error === "unavailable"
@@ -1020,7 +1020,7 @@ export default function BookingDiary({ config }: { config: DiaryConfig }) {
                     id="pay-confirm"
                     aria-disabled="true"
                   >
-                    I&apos;ve sent the payment{" "}
+                    Reserve the room{" "}
                     <span className="ar" aria-hidden="true">
                       →
                     </span>
