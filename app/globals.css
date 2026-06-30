@@ -1,0 +1,22 @@
+/*
+ * Phase 0: minimal reset only.
+ *
+ * In Phase 1 this file receives the hand-written CSS from legacy/studioone.html
+ * essentially verbatim (custom properties, the umber/oat/marigold palette,
+ * GSAP/Lenis motion styles, etc.). Do NOT introduce a utility framework.
+ */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
