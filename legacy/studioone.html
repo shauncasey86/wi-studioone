@@ -1,0 +1,1568 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#221a13" />
+<title>StudioONE — one studio in Hull, booked by the hour. Sutton Village.</title>
+<meta name="description" content="StudioONE — a bare, daylit studio in Sutton Village, Hull. £45 the first hour, less for each after, one-hour minimum. Pay by bank transfer; your door code arrives by email once it clears. For shoots, classes, dinners, workshops and quiet days." />
+
+<!-- canonical + social (point these at the live domain / a real OG image before launch) -->
+<link rel="canonical" href="https://studioone.room/" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="StudioONE" />
+<meta property="og:locale" content="en_GB" />
+<meta property="og:url" content="https://studioone.room/" />
+<meta property="og:title" content="StudioONE — a room in Hull, kept by the hour" />
+<meta property="og:description" content="A bare, daylit room in Sutton Village, Hull. £45 the first hour, less for each after, one-hour minimum. Pay by transfer; the door code lands by email once it clears." />
+<meta property="og:image" content="https://images.unsplash.com/photo-1722604819704-78b6d9c26ea9?auto=format&fit=crop&w=1200&h=630&q=80" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content="The room — empty, daylit, oak floor, lime-plaster walls." />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="StudioONE — a room in Hull, kept by the hour" />
+<meta name="twitter:description" content="A bare, daylit room in Sutton Village, Hull. £45 the first hour, less for each after, one-hour minimum. Code by email once payment clears." />
+<meta name="twitter:image" content="https://images.unsplash.com/photo-1722604819704-78b6d9c26ea9?auto=format&fit=crop&w=1200&h=630&q=80" />
+
+<!-- inline SVG favicon: umber tile, marigold mark — no extra request -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='5' fill='%23221a13'/%3E%3Ccircle cx='16' cy='16' r='4.6' fill='%23d98324'/%3E%3C/svg%3E" />
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' fill='%23221a13'/%3E%3Ccircle cx='90' cy='90' r='26' fill='%23d98324'/%3E%3C/svg%3E" />
+<link rel="mask-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='5' fill='black'/%3E%3C/svg%3E" color="#d98324" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- warm up the script CDNs early; the libraries themselves load at end of body so they never block first paint -->
+<link rel="preconnect" href="https://unpkg.com">
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..600&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+<style>
+/* ════════════════════════════════════════════════════════
+   StudioONE — design tokens
+   umber ground · oat plaster · marigold signal · clay italic
+   ════════════════════════════════════════════════════════ */
+:root{
+  --paper:      #ece4d3;   /* oat — primary light surface */
+  --paper-2:    #e3d8c1;
+  --paper-3:    #f4efe2;   /* lightest */
+  --umber:     #221a13;   /* warm plaster-shadow — dominant dark (was forest #122019) */
+  --umber-2:   #2c2118;   /* lifted panel — diary headers, the days rail */
+  --umber-3:   #181009;   /* deepest umber — cards, frames */
+  --umber-warm: #4a3526;   /* mid earthen clay — decorative ground only */
+  --moss:       #515945;   /* quiet text on paper — darkened to clear 4.5:1 (was #6c7560) */
+  --moss-soft:  #6c7560;   /* original tone — decorative use only (rules, non-text) */
+  --ink:        #14110b;   /* warm near-black */
+  --ink-soft:   #2c281d;
+  --clay:       #9a531d;   /* warm accent for italics on light */
+  --clay-deep:  #7a3f12;
+  --marigold:   #d98324;   /* THE signal — late light */
+  --marigold-2: #ec9c41;
+  --marigold-deep:#b46a16;
+  --glow:       rgba(217,131,36,.18);
+
+  /* readable oat labels on umber — solid, verified ≥4.5:1 (alpha oat kept for decoration only) */
+  --oat-dim:    #b8ad95;   /* secondary text on the umber family (≥6.5:1) */
+  --oat-quiet:  #9c927c;   /* quietest readable micro-label (≥5:1 even on umber-2) */
+
+  --serif: 'Fraunces', 'Times New Roman', serif;
+  --mono:  'Space Mono', ui-monospace, monospace;
+
+  --gutter:    clamp(1.5rem, 5vw, 4.5rem);
+  --rule:      1px solid rgba(20,17,11,.16);
+  --rule-soft: 1px solid rgba(20,17,11,.08);
+  --rule-dk:   1px solid rgba(236,228,211,.14);
+  --rule-dk-soft: 1px solid rgba(236,228,211,.07);
+
+  /* spacing scale — one source of truth for vertical rhythm within sections */
+  --sp-section: clamp(3.25rem, 7vw, 5.5rem);   /* section top/bottom padding */
+  --sp-head:    clamp(1.75rem, 4vw, 2.75rem);  /* chapter header → its content */
+  --sp-block:   clamp(1.75rem, 3.5vw, 2.75rem);/* between stacked blocks in a section */
+  --sp-lede:    clamp(1rem, 1.5vw, 1.35rem);   /* title → lede */
+}
+
+*,*::before,*::after{ box-sizing:border-box; margin:0; padding:0; }
+html{ -webkit-text-size-adjust:100%; scroll-behavior:auto; }
+html.lenis{ height:auto; }
+.lenis.lenis-smooth{ scroll-behavior:auto !important; }
+.lenis.lenis-smooth [data-lenis-prevent]{ overscroll-behavior:contain; }
+.lenis.lenis-stopped{ overflow:hidden; }
+
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--serif);
+  font-weight:380;
+  font-size:1.0625rem;
+  line-height:1.55;
+  font-variation-settings:"opsz" 22, "SOFT" 0, "WONK" 0;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  font-feature-settings:"kern" 1,"liga" 1;
+  overflow-x:hidden;
+}
+::selection{ background:var(--marigold); color:var(--umber-3); }
+img,svg{ display:block; max-width:100%; }
+button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer; }
+a{ color:inherit; text-decoration:none; }
+
+/* keyboard focus — visible because cursor is hidden on fine pointers */
+:focus-visible{ outline:2px solid var(--marigold); outline-offset:3px; border-radius:1px; }
+
+/* Grain — atmosphere on every surface */
+body::before{
+  content:"";
+  position:fixed; inset:-50%;
+  background-image:url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.35 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/></svg>");
+  opacity:.07; mix-blend-mode:multiply; pointer-events:none; z-index:100;
+}
+
+/* ─────────── custom cursor ─────────── */
+.cur, .cur-ring{ position:fixed; top:0; left:0; border-radius:50%; pointer-events:none; transform:translate(-50%,-50%); display:none; }
+.cur{
+  width:9px; height:9px; background:var(--marigold); z-index:1000; mix-blend-mode:normal;
+  transition:width .35s cubic-bezier(.2,.7,.2,1), height .35s cubic-bezier(.2,.7,.2,1), opacity .25s ease;
+}
+.cur-ring{
+  width:38px; height:38px; border:1px solid rgba(217,131,36,.55); z-index:999;
+  transition:width .35s cubic-bezier(.2,.7,.2,1), height .35s cubic-bezier(.2,.7,.2,1), border-color .25s ease, opacity .25s ease;
+}
+.cur.on{ width:80px; height:80px; }
+.cur.on::after{
+  content:attr(data-label); position:absolute; inset:0; display:grid; place-items:center;
+  font-family:var(--mono); font-size:.6rem; letter-spacing:.16em; color:var(--umber-3); text-transform:uppercase;
+}
+.cur-ring.on{ opacity:0; }
+/* The native cursor is only hidden AFTER JS confirms the custom cursor is live
+   (html.cur-live is added on the first real mousemove). If the script fails to
+   load or never runs, the OS cursor stays visible — no dead-pointer trap. */
+@media (hover:hover) and (pointer:fine){
+  html.cur-live .cur, html.cur-live .cur-ring{ display:block; }
+  html.cur-live, html.cur-live a, html.cur-live button{ cursor:none; }
+}
+
+/* ─────────── layout ─────────── */
+.frame{ width:100%; max-width:1500px; margin:0 auto; padding:0 var(--gutter); }
+.eyebrow{
+  font-family:var(--mono); font-size:.7rem; letter-spacing:.24em; text-transform:uppercase;
+}
+
+/* ─────────── topbar ─────────── */
+.bar{
+  position:fixed; top:0; left:0; right:0; z-index:50; padding:1.3rem 0;
+  font-family:var(--mono); font-size:.7rem; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--paper);
+  transition:padding .4s ease, background .4s ease, color .4s ease, border-color .4s ease;
+  border-bottom:1px solid transparent;
+}
+.bar.pin{
+  background:rgba(236,228,211,.9); -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px);
+  color:var(--ink); border-bottom-color:rgba(20,17,11,.1); padding:.85rem 0;
+}
+.bar > .frame{ display:flex; justify-content:space-between; align-items:center; gap:1rem; min-width:0; }
+.bar a{ transition:opacity .3s ease; }
+.bar a:hover{ opacity:.55; }
+.mark{
+  font-family:var(--serif); font-weight:420; font-size:1.55rem; letter-spacing:-.02em;
+  text-transform:none; font-variation-settings:"opsz" 40; line-height:1;
+  display:inline-flex; align-items:flex-start; gap:.06em;
+}
+.mark .hr{
+  font-family:var(--mono); font-weight:700; font-size:.34em; letter-spacing:.04em;
+  color:var(--marigold); transform:translateY(.15em);
+}
+.bar nav{ display:flex; gap:2.2rem; }
+.bar nav a{ position:relative; padding:.25rem 0; }
+.bar nav a::after{
+  content:""; position:absolute; left:0; right:0; bottom:-2px; height:1px; background:currentColor;
+  transform:scaleX(0); transform-origin:left; transition:transform .45s cubic-bezier(.2,.7,.2,1);
+}
+.bar nav a:hover{ opacity:1; }
+.bar nav a:hover::after{ transform:scaleX(1); }
+.bar .status{ display:inline-flex; align-items:center; gap:.55rem; }
+.bar .status::before{
+  content:""; width:6px; height:6px; border-radius:50%; background:var(--marigold);
+  animation:beat 2.4s ease-in-out infinite;
+}
+@keyframes beat{ 0%,100%{opacity:.35} 50%{opacity:1} }
+@media (max-width:920px){ .bar nav{ display:none; } }
+@media (max-width:560px){ .bar .status{ display:none; } }
+
+/* ════════════════════════════════════════════════════════
+   HERO — type + the day-arc, on warm umber
+   ════════════════════════════════════════════════════════ */
+.hero{
+  position:relative; min-height:100svh; background:var(--umber); color:var(--paper);
+  overflow:hidden; display:grid; grid-template-rows:1fr auto;
+  padding-top:clamp(5rem,10vh,7rem);
+}
+.hero::before{
+  /* low warm sun, bottom-left */
+  content:""; position:absolute; inset:0; z-index:0; pointer-events:none;
+  background:
+    radial-gradient(60% 50% at 16% 88%, rgba(217,131,36,.22), transparent 62%),
+    radial-gradient(50% 40% at 88% 8%, rgba(43,74,58,.5), transparent 60%),
+    linear-gradient(180deg, var(--umber-3) 0%, var(--umber) 42%, var(--umber-2) 100%);
+}
+.hero-inner{ position:relative; z-index:2; display:grid; align-content:center; gap:clamp(2rem,5vh,3.5rem); padding-bottom:clamp(2rem,5vh,3.5rem); }
+.hero-grid{
+  display:grid; grid-template-columns:1.05fr .95fr; gap:clamp(2rem,5vw,5rem); align-items:center;
+}
+@media (max-width:980px){ .hero-grid{ grid-template-columns:1fr; gap:clamp(2.5rem,6vh,4rem); } }
+
+.hero-eyebrow{
+  display:flex; gap:1.4rem; align-items:center; flex-wrap:wrap; color:rgba(236,228,211,.62);
+  margin-bottom:clamp(1.4rem,3vh,2.2rem); overflow:hidden;
+}
+.hero-eyebrow .ln{ display:inline-block; width:46px; height:1px; background:rgba(236,228,211,.32); }
+
+.hero-title{
+  font-family:var(--serif); font-weight:330; font-variation-settings:"opsz" 120;
+  font-size:clamp(3.4rem,12vw,11rem); line-height:.86; letter-spacing:-.04em; color:var(--paper);
+}
+.hero-title .row{ display:block; overflow:hidden; }
+.hero-title .row > span{ display:inline-block; transform:translateY(112%); will-change:transform; }
+.hero-title em{
+  font-style:italic; font-weight:330; color:var(--marigold); font-variation-settings:"opsz" 120,"WONK" 1;
+}
+.hero-sub{
+  margin-top:clamp(1.6rem,3vh,2.4rem); max-width:40ch;
+  font-weight:360; font-size:clamp(1.05rem,1.5vw,1.4rem); line-height:1.5;
+  color:rgba(236,228,211,.82); font-variation-settings:"opsz" 28;
+}
+.hero-foot{
+  margin-top:clamp(1.8rem,4vh,2.6rem); display:flex; gap:clamp(1.5rem,4vw,3.5rem); align-items:flex-end; flex-wrap:wrap;
+  border-top:var(--rule-dk); padding-top:1.4rem;
+}
+.price .n{
+  font-family:var(--serif); font-weight:380; font-size:clamp(2.4rem,4.5vw,3.6rem); line-height:1;
+  letter-spacing:-.03em; color:var(--paper); font-variation-settings:"opsz" 80;
+}
+.price .n .u{
+  font-family:var(--mono); font-size:.24em; letter-spacing:.16em; text-transform:uppercase;
+  color:rgba(236,228,211,.55); margin-left:.5rem; vertical-align:top; display:inline-block; transform:translateY(1em);
+}
+.price .fine{ font-family:var(--mono); font-size:.68rem; letter-spacing:.14em; text-transform:uppercase; color:var(--oat-quiet); margin-top:.4rem; }
+.hero-cta{
+  font-family:var(--mono); font-size:.74rem; letter-spacing:.2em; text-transform:uppercase;
+  color:var(--umber-3); background:var(--marigold); padding:1.1rem 1.7rem;
+  display:inline-flex; align-items:center; gap:.85rem; transition:background .3s ease, transform .3s ease;
+}
+.hero-cta:hover{ background:var(--marigold-2); }
+.hero-cta .ar{ transition:transform .3s ease; }
+.hero-cta:hover .ar{ transform:translateX(5px); }
+
+/* ── the day-arc ── */
+.arc-wrap{ position:relative; }
+.arc-wrap svg{ width:100%; height:auto; overflow:visible; }
+.arc-cap{
+  position:absolute; left:50%; bottom:-.4rem; transform:translateX(-50%); text-align:center;
+  font-family:var(--mono); font-size:.66rem; letter-spacing:.18em; text-transform:uppercase; color:var(--oat-quiet);
+}
+.arc-track{ fill:none; stroke:rgba(236,228,211,.14); stroke-width:2; }
+.arc-elapsed{ fill:none; stroke:var(--marigold); stroke-width:2.5; stroke-linecap:round; filter:drop-shadow(0 0 8px rgba(217,131,36,.5)); }
+.arc-booked{ fill:none; stroke:rgba(236,228,211,.42); stroke-width:6; stroke-linecap:butt; }
+.arc-tick{ stroke:rgba(236,228,211,.28); stroke-width:1; }
+.arc-tick.maj{ stroke:rgba(236,228,211,.5); stroke-width:1.5; }
+.arc-lab{ font-family:var(--mono); font-size:13px; letter-spacing:.12em; fill:rgba(236,228,211,.55); text-transform:uppercase; }
+.arc-sun-core{ fill:var(--marigold); }
+.arc-sun-halo{ fill:var(--marigold); opacity:.2; }
+.arc-sun-lab{ font-family:var(--mono); font-size:13px; letter-spacing:.06em; fill:var(--paper); }
+.arc-base{ stroke:rgba(236,228,211,.2); stroke-width:1; }
+
+
+/* ─────────── chapter shell ─────────── */
+.chapter{ position:relative; padding:var(--sp-section) 0; }
+.chead{ display:grid; grid-template-columns:1fr 1.5fr; gap:clamp(2rem,5vw,4rem); align-items:end; margin-bottom:var(--sp-head); }
+@media (max-width:880px){ .chead{ grid-template-columns:1fr; gap:1.5rem; } }
+.cnum{
+  font-family:var(--mono); font-size:.7rem; letter-spacing:.24em; text-transform:uppercase; color:var(--clay);
+  display:inline-flex; align-items:center; gap:1rem;
+}
+.cnum::before{ content:""; width:30px; height:1px; background:var(--clay); }
+.ctitle{
+  font-family:var(--serif); font-weight:320; font-size:clamp(2.5rem,7vw,6.3rem); line-height:.92;
+  letter-spacing:-.035em; color:var(--ink); margin-top:1.4rem; padding:.12em 0 .18em;
+  font-variation-settings:"opsz" 120; text-wrap:balance;
+}
+.ctitle em{ font-style:italic; color:var(--clay); font-variation-settings:"opsz" 120,"WONK" 1; }
+.clede{
+  font-family:var(--serif); font-weight:360; font-size:clamp(1.12rem,1.4vw,1.45rem); line-height:1.45;
+  color:var(--ink-soft); max-width:46ch; font-variation-settings:"opsz" 28; margin-top:var(--sp-lede);
+}
+
+/* ── §01 manifesto ── */
+.manifesto{ background:var(--paper); border-top:var(--rule); border-bottom:var(--rule); }
+.man-frame{ padding:clamp(3rem,7vw,5.5rem) 0; }
+.pull{
+  font-family:var(--serif); font-weight:300; font-size:clamp(2.4rem,7.5vw,8.5rem); line-height:1;
+  letter-spacing:-.04em; color:var(--ink); font-variation-settings:"opsz" 120; text-wrap:balance; max-width:24ch;
+}
+.pull em{ font-style:italic; color:var(--clay); font-variation-settings:"opsz" 120,"WONK" 1; }
+.pull .w{ display:inline-block; opacity:.13; transition:opacity .4s ease; will-change:opacity; }
+.pull .w.on{ opacity:1; }
+.man-foot{ display:grid; grid-template-columns:repeat(3,1fr); gap:clamp(1.5rem,4vw,3rem); border-top:var(--rule-soft); margin-top:clamp(4rem,8vw,6rem); padding-top:2rem; }
+@media (max-width:720px){ .man-foot{ grid-template-columns:1fr; gap:2rem; } }
+.man-foot dt{ font-family:var(--mono); font-size:.7rem; letter-spacing:.2em; text-transform:uppercase; color:var(--moss); margin-bottom:.55rem; }
+.man-foot dd{ font-weight:360; font-size:1.05rem; line-height:1.45; color:var(--ink); max-width:30ch; font-variation-settings:"opsz" 20; }
+
+/* ── §02 one room, many days: a typeset index ── */
+.days{ background:var(--umber-2); color:var(--paper); padding:var(--sp-section) 0; position:relative; }
+.days .cnum{ color:var(--marigold); }
+.days .cnum::before{ background:var(--marigold); }
+.days .ctitle{ color:var(--paper); }
+.days .ctitle em{ color:var(--marigold); }
+.days .clede{ color:rgba(236,228,211,.72); }
+.kinds{ list-style:none; border-top:1px solid rgba(236,228,211,.16); }
+.kind{ display:grid; grid-template-columns:clamp(108px,15vw,168px) minmax(0,1fr) auto; align-items:baseline; gap:clamp(1rem,3vw,2.5rem); padding:clamp(1.05rem,2.4vw,1.55rem) 0; border-bottom:1px solid rgba(236,228,211,.16); transition:background .35s ease; }
+.kind:hover{ background:rgba(236,228,211,.04); }
+.kind-k{ font-family:var(--mono); font-size:.72rem; letter-spacing:.18em; text-transform:uppercase; color:var(--marigold); }
+.kind-l{ font-family:var(--serif); font-weight:350; font-size:clamp(1.05rem,1.7vw,1.4rem); line-height:1.4; color:rgba(236,228,211,.9); max-width:56ch; font-variation-settings:"opsz" 30; text-wrap:pretty; }
+.kind-l em{ font-style:italic; color:var(--marigold); font-variation-settings:"opsz" 30,"WONK" 1; }
+.kind-t{ font-family:var(--mono); font-size:.66rem; letter-spacing:.14em; text-transform:uppercase; color:var(--oat-dim); white-space:nowrap; }
+@media (max-width:640px){
+  .kind{ grid-template-columns:1fr auto; gap:.45rem 1rem; }
+  .kind-l{ grid-column:1 / -1; }
+}
+
+/* ── §03 the room — a bold one-line statement band ── */
+.roomhero{ position:relative; background:var(--umber); color:var(--paper); padding:clamp(5rem,15vh,9.5rem) 0; overflow:hidden; display:grid; align-items:center; }
+.roomhero::before{
+  content:""; position:absolute; inset:0; z-index:0; pointer-events:none;
+  background:
+    radial-gradient(60% 60% at 16% 28%, rgba(217,131,36,.17), transparent 62%),
+    radial-gradient(48% 50% at 88% 82%, rgba(43,74,58,.3), transparent 60%),
+    linear-gradient(180deg, var(--umber-3) 0%, var(--umber) 55%, var(--umber-2) 100%);
+}
+.roomhero > .frame{ position:relative; z-index:1; }
+.roomhero-title{ font-family:var(--serif); font-weight:300; font-size:clamp(3rem,11vw,9.5rem); line-height:.88; letter-spacing:-.045em; color:var(--paper); font-variation-settings:"opsz" 144; text-wrap:balance; max-width:16ch; }
+.roomhero-title em{ font-style:italic; color:var(--marigold); font-variation-settings:"opsz" 144,"WONK" 1; }
+
+/* ── §04 how ── */
+.how{ background:var(--paper-3); padding:clamp(3.25rem,7vw,5.5rem) 0; border-top:var(--rule); }
+.steps{ display:grid; grid-template-columns:repeat(3,1fr); border-top:var(--rule); }
+@media (max-width:880px){ .steps{ grid-template-columns:1fr; } }
+.step{ padding:clamp(2rem,4vw,3.5rem) clamp(1.5rem,3vw,2.5rem); border-right:var(--rule-soft); border-bottom:var(--rule-soft); display:grid; gap:1rem; align-content:start; transition:background .4s ease; }
+.step:last-child{ border-right:0; }
+@media (max-width:880px){ .step{ border-right:0; } .step:last-child{ border-bottom:0; } }
+.step:hover{ background:var(--paper); }
+.step .num{ font-family:var(--mono); font-size:.7rem; letter-spacing:.24em; text-transform:uppercase; color:var(--clay); margin-bottom:1.4rem; }
+.step h3{ font-family:var(--serif); font-weight:360; font-size:clamp(1.7rem,2.2vw,2.4rem); line-height:1.05; letter-spacing:-.02em; color:var(--ink); font-variation-settings:"opsz" 56; text-wrap:balance; max-width:14ch; }
+.step h3 em{ font-style:italic; color:var(--clay); font-variation-settings:"opsz" 56,"WONK" 1; }
+.step p{ margin-top:.4rem; color:var(--ink-soft); max-width:36ch; line-height:1.55; }
+
+/* ── §05 diary / booking ── */
+.book{ background:var(--umber); color:var(--paper); padding:clamp(3.25rem,7vw,5.5rem) 0; position:relative; overflow:hidden; }
+.book::before{ content:""; position:absolute; inset:0; pointer-events:none; background:radial-gradient(ellipse at 50% 0%, rgba(217,131,36,.13), transparent 50%); }
+.book .frame{ position:relative; }
+.book .cnum{ color:var(--marigold); } .book .cnum::before{ background:var(--marigold); }
+.book .ctitle{ color:var(--paper); } .book .ctitle em{ color:var(--marigold); }
+.book .clede{ color:var(--oat-dim); }
+
+/* visually-hidden, still announced by SR */
+.vh{ position:absolute !important; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }
+
+.booking{ position:relative; background:rgba(236,228,211,.03); border:1px solid rgba(236,228,211,.1); margin-top:clamp(2rem,4vw,3rem); }
+.booking-meta{ display:flex; justify-content:space-between; padding:1rem clamp(1.1rem,2.5vw,1.75rem); border-bottom:1px solid rgba(236,228,211,.12); font-family:var(--mono); font-size:.7rem; letter-spacing:.16em; text-transform:uppercase; color:var(--oat-dim); flex-wrap:wrap; gap:1rem; }
+.booking-meta .r{ color:var(--marigold); display:inline-flex; align-items:center; gap:.5rem; }
+.booking-meta .r::before{ content:""; width:6px; height:6px; border-radius:50%; background:var(--marigold); animation:beat 2.4s ease-in-out infinite; }
+
+.bhint{ margin-top:1.1rem; font-family:var(--mono); font-size:.66rem; line-height:1.6; letter-spacing:.03em; color:var(--oat-quiet); }
+.bhint a{ color:var(--marigold); border-bottom:1px solid rgba(217,131,36,.4); padding-bottom:1px; }
+.bhint a:hover{ border-bottom-color:var(--marigold); }
+
+/* ── the diary: calendar (left) + slot panel (right) ── */
+.diary{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.04fr); gap:clamp(1.5rem,3.5vw,3.25rem); padding:clamp(1.4rem,3vw,2rem) clamp(1.1rem,2.5vw,1.75rem); }
+@media (max-width:880px){ .diary{ grid-template-columns:1fr; gap:0; } }
+
+/* step 1 — a real four-week calendar */
+.cal-col{ min-width:0; }
+.cal-head{ display:grid; grid-template-columns:repeat(7,1fr); gap:.4rem; margin-bottom:.5rem; }
+.cal-head span{ font-family:var(--mono); font-size:.58rem; letter-spacing:.12em; text-transform:uppercase; color:var(--oat-quiet); text-align:center; }
+.cal-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:.4rem; }
+.cell{ position:relative; aspect-ratio:1/1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.25rem; padding:.3rem; }
+.cell.out{ pointer-events:none; }
+.cell.out .cd{ font-family:var(--serif); font-size:1rem; color:rgba(236,228,211,.16); }
+button.cell{ appearance:none; -webkit-appearance:none; background:rgba(236,228,211,.04); border:1px solid rgba(236,228,211,.12); color:var(--paper); cursor:pointer; transition:background .18s ease, border-color .18s ease, color .18s ease; }
+button.cell:hover{ background:var(--glow); border-color:rgba(217,131,36,.42); }
+button.cell:focus-visible{ outline:2px solid var(--marigold); outline-offset:2px; z-index:2; }
+.cell .cd{ font-family:var(--serif); font-weight:380; font-size:clamp(1.05rem,2.3vw,1.5rem); line-height:1; font-variation-settings:"opsz" 36; font-variant-numeric:tabular-nums; }
+.cell .ct{ position:absolute; top:.32rem; right:.4rem; font-family:var(--mono); font-size:.46rem; letter-spacing:.08em; text-transform:uppercase; color:var(--marigold); }
+.cell .cmeter{ width:58%; height:3px; background:rgba(236,228,211,.14); overflow:hidden; }
+.cell .cmeter i{ display:block; height:100%; background:var(--marigold); }
+.cell.some .cmeter i{ background:var(--marigold-deep); }
+.cell.full{ cursor:default; }
+.cell.full .cd{ opacity:.4; }
+.cell.full .cmeter{ opacity:0; }
+.cell.full::after{ content:""; position:absolute; left:26%; right:26%; top:54%; height:1px; background:rgba(236,228,211,.34); }
+.cell.today{ border-color:rgba(217,131,36,.55); }
+.cell[aria-checked="true"]{ background:var(--marigold); border-color:var(--marigold); color:var(--umber-3); }
+.cell[aria-checked="true"] .cmeter{ background:rgba(24,16,9,.22); }
+.cell[aria-checked="true"] .cmeter i{ background:var(--umber-3); }
+.cell[aria-checked="true"] .ct{ color:var(--umber-3); }
+.cal-legend{ display:flex; gap:1.1rem; margin-top:1.1rem; flex-wrap:wrap; font-family:var(--mono); font-size:.58rem; letter-spacing:.1em; text-transform:uppercase; color:var(--oat-quiet); }
+.cal-legend .lg{ display:inline-flex; align-items:center; gap:.45rem; }
+.cal-legend .lg::before{ content:""; width:10px; height:3px; background:var(--marigold); }
+.cal-legend .lg-some::before{ background:var(--marigold-deep); }
+.cal-legend .lg-full::before{ background:rgba(236,228,211,.34); }
+
+/* step 2–4 — the slot panel */
+.slot-col{ min-width:0; display:flex; flex-direction:column; border-left:1px solid rgba(236,228,211,.1); padding-left:clamp(1.3rem,2.8vw,2.4rem); }
+@media (max-width:880px){ .slot-col{ border-left:0; padding-left:0; border-top:1px solid rgba(236,228,211,.1); margin-top:1.6rem; padding-top:1.7rem; } }
+.slot-head{ margin-bottom:1.7rem; }
+.slot-k{ font-family:var(--mono); font-size:.62rem; letter-spacing:.2em; text-transform:uppercase; color:var(--oat-dim); }
+.slot-day{ margin-top:.55rem; font-family:var(--serif); font-weight:330; font-size:clamp(1.7rem,3vw,2.5rem); line-height:1; letter-spacing:-.025em; color:var(--paper); font-variation-settings:"opsz" 60; text-wrap:balance; }
+.slot-day.empty{ color:var(--oat-dim); font-style:italic; }
+.slot-body{ display:grid; gap:1.9rem; }
+.sblock{ border:0; min-width:0; margin:0; padding:0; display:grid; gap:1rem; }
+.sblock[hidden]{ display:none; }
+.sblock > legend.sblock-h{ float:none; width:auto; padding:0; margin:0; font-family:var(--mono); font-size:.64rem; letter-spacing:.18em; text-transform:uppercase; color:var(--marigold); }
+.slot-col .bookbar{ margin-top:auto; grid-template-columns:1fr; gap:1rem; }
+@media (max-width:520px){ .cell .ct{ display:none; } }
+
+/* step 2 — start times, grouped by part of day */
+.times{ display:grid; gap:1.5rem; }
+.tgroup{ display:grid; gap:.75rem; }
+.tgroup-h{ font-family:var(--mono); font-size:.64rem; letter-spacing:.18em; text-transform:uppercase; color:var(--oat-dim); display:flex; align-items:center; gap:.9rem; }
+.tgroup-h::after{ content:""; flex:1; height:1px; background:rgba(236,228,211,.1); }
+.tgrid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(92px,1fr)); gap:.5rem; }
+.time{ appearance:none; -webkit-appearance:none; min-height:48px; padding:.7rem .5rem; font-family:var(--mono); font-size:.9rem; letter-spacing:.03em; color:var(--paper); background:rgba(236,228,211,.05); border:1px solid rgba(236,228,211,.16); cursor:pointer; transition:background .15s ease, border-color .15s ease, color .15s ease; }
+.time:hover{ background:var(--glow); border-color:rgba(217,131,36,.45); }
+.time:focus-visible{ outline:2px solid var(--marigold); outline-offset:2px; }
+.time[aria-pressed="true"]{ background:var(--marigold); border-color:var(--marigold); color:var(--umber-3); font-weight:700; }
+.times-empty{ font-family:var(--serif); font-style:italic; font-size:1.05rem; line-height:1.5; color:var(--oat-dim); max-width:46ch; }
+
+/* step 3 — length: common presets + an hourly stepper */
+.length{ display:grid; gap:1.3rem; }
+.presets{ display:flex; flex-wrap:wrap; gap:.5rem; }
+.preset{ appearance:none; -webkit-appearance:none; font-family:var(--mono); font-size:.68rem; letter-spacing:.12em; text-transform:uppercase; min-height:44px; padding:.7rem 1.15rem; color:var(--oat-dim); background:transparent; border:1px solid rgba(236,228,211,.24); cursor:pointer; transition:background .2s ease, border-color .2s ease, color .2s ease; }
+.preset:hover{ color:var(--paper); border-color:var(--paper); }
+.preset:focus-visible{ outline:2px solid var(--marigold); outline-offset:2px; }
+.preset[aria-pressed="true"]{ background:var(--marigold); border-color:var(--marigold); color:var(--umber-3); }
+.stepper{ display:flex; align-items:center; gap:1.1rem; max-width:460px; }
+.lstep{ appearance:none; -webkit-appearance:none; width:54px; height:54px; flex:0 0 auto; display:grid; place-items:center; font-family:var(--serif); font-size:1.9rem; line-height:1; color:var(--paper); border:1px solid rgba(236,228,211,.3); background:rgba(236,228,211,.04); border-radius:50%; cursor:pointer; transition:background .2s ease, border-color .2s ease, opacity .2s ease; }
+.lstep:hover{ background:var(--glow); border-color:var(--marigold); }
+.lstep:focus-visible{ outline:2px solid var(--marigold); outline-offset:2px; }
+.lstep:disabled{ opacity:.28; pointer-events:none; }
+.lread{ flex:1; display:grid; gap:.25rem; }
+.lspan{ font-family:var(--serif); font-weight:420; font-size:clamp(1.5rem,2.4vw,1.9rem); letter-spacing:-.01em; color:var(--paper); font-variation-settings:"opsz" 32; }
+.lmeta{ font-family:var(--mono); font-size:.64rem; letter-spacing:.1em; text-transform:uppercase; color:var(--oat-dim); }
+.preset .pp{ margin-left:.2rem; color:var(--paper); }
+.preset[aria-pressed="true"] .pp{ color:var(--umber-3); }
+.len-note{ font-family:var(--mono); font-size:.66rem; line-height:1.65; letter-spacing:.04em; color:var(--oat-quiet); max-width:44ch; }
+.len-note[hidden]{ display:none; }
+.len-note a{ color:var(--marigold); border-bottom:1px solid rgba(217,131,36,.4); padding-bottom:1px; transition:border-color .2s ease; }
+.len-note a:hover{ border-bottom-color:var(--marigold); }
+
+/* booking bar — shared */
+.bookbar{ display:grid; grid-template-columns:1fr auto; gap:1.5rem; align-items:center; margin-top:2rem; padding:1.5rem clamp(1rem,2vw,1.5rem) 0; border-top:1px solid rgba(236,228,211,.12); }
+@media (max-width:760px){ .bookbar{ grid-template-columns:1fr; } }
+.summary{ display:flex; gap:1rem; align-items:baseline; flex-wrap:wrap; font-family:var(--serif); font-weight:360; font-size:clamp(1.05rem,1.3vw,1.25rem); color:var(--paper); font-variation-settings:"opsz" 28; }
+.summary .empty{ color:var(--oat-dim); font-style:italic; }
+.summary strong{ font-family:var(--serif); font-weight:420; font-size:clamp(1.5rem,2vw,2rem); color:var(--marigold); letter-spacing:-.015em; }
+.bact{ display:flex; gap:.7rem; flex-wrap:wrap; }
+@media (max-width:760px){ .bact{ display:grid; grid-template-columns:1fr 1fr; } .bact .btn{ grid-column:1 / -1; justify-content:center; } }
+.btn,.ghost{ font-family:var(--mono); font-size:.72rem; letter-spacing:.16em; text-transform:uppercase; min-height:48px; padding:1rem 1.5rem; border:1px solid transparent; transition:background .3s ease, color .3s ease, border-color .3s ease; display:inline-flex; align-items:center; justify-content:center; gap:.7rem; }
+.btn{ background:var(--marigold); color:var(--umber-3); }
+.btn:hover{ background:var(--marigold-2); }
+.btn .ar{ transition:transform .3s ease; } .btn:hover .ar{ transform:translateX(4px); }
+.ghost{ background:transparent; color:var(--oat-dim); border-color:rgba(236,228,211,.28); }
+.ghost:hover{ color:var(--paper); border-color:var(--paper); }
+[aria-disabled="true"]{ opacity:.35; pointer-events:none; }
+
+/* step 04 — details + bank transfer */
+.btn[hidden],.bact[hidden]{ display:none; }
+.bfields{ display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+@media (max-width:560px){ .bfields{ grid-template-columns:1fr; } }
+.bfield{ display:grid; gap:.5rem; }
+.bfield label{ font-family:var(--mono); font-size:.64rem; letter-spacing:.18em; text-transform:uppercase; color:var(--oat-dim); }
+.bfield input{ appearance:none; -webkit-appearance:none; width:100%; min-height:50px; padding:.85rem 1rem; font-family:var(--serif); font-weight:380; font-size:1.05rem; color:var(--paper); background:rgba(236,228,211,.05); border:1px solid rgba(236,228,211,.18); border-radius:0; transition:border-color .2s ease, background .2s ease; font-variation-settings:"opsz" 24; }
+.bfield input::placeholder{ color:var(--oat-quiet); font-style:italic; }
+.bfield input:hover{ border-color:rgba(236,228,211,.32); }
+.bfield input:focus{ outline:none; border-color:var(--marigold); background:var(--glow); }
+.bfield input:focus-visible{ outline:2px solid var(--marigold); outline-offset:2px; }
+.bfield input:user-invalid{ border-color:var(--clay); }
+.pay{ display:grid; gap:1.4rem; margin-top:1.6rem; }
+.bacs{ background:rgba(236,228,211,.04); border:1px solid rgba(236,228,211,.14); padding:clamp(1.2rem,2.5vw,1.6rem); }
+.bacs-h{ font-family:var(--mono); font-size:.62rem; letter-spacing:.2em; text-transform:uppercase; color:var(--oat-dim); display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:1rem; }
+.bacs-h .demo{ color:var(--clay); letter-spacing:.16em; }      /* placeholder flag — remove with the real account */
+.bacs-row{ display:flex; align-items:baseline; justify-content:space-between; gap:1rem; padding:.6rem 0; border-bottom:1px solid rgba(236,228,211,.08); }
+.bacs-row:last-child{ border-bottom:0; }
+.bacs-row dt{ font-family:var(--mono); font-size:.66rem; letter-spacing:.14em; text-transform:uppercase; color:var(--oat-quiet); }
+.bacs-row dd{ font-family:var(--mono); font-size:.98rem; letter-spacing:.02em; color:var(--paper); font-variant-numeric:tabular-nums; text-align:right; }
+.bacs-row.ref dd{ color:var(--marigold); font-weight:700; }
+.bacs-row.amt dd{ font-family:var(--serif); font-size:1.35rem; font-weight:420; color:var(--marigold); letter-spacing:-.01em; }
+.pay-note{ font-family:var(--mono); font-size:.66rem; line-height:1.7; letter-spacing:.03em; color:var(--oat-quiet); max-width:56ch; }
+.pay-note strong{ color:var(--oat-dim); font-weight:700; }
+.pay-btn{ justify-self:start; }
+
+/* the confirmation that replaces the picker once payment is flagged */
+.booked{ padding:clamp(2rem,5vw,3.5rem) clamp(1.4rem,3vw,2.5rem); display:grid; gap:1.5rem; }
+.booked-k{ font-family:var(--mono); font-size:.66rem; letter-spacing:.22em; text-transform:uppercase; color:var(--marigold); display:inline-flex; align-items:center; gap:.6rem; }
+.booked-k::before{ content:""; width:7px; height:7px; border-radius:50%; background:var(--marigold); animation:beat 2.4s ease-in-out infinite; }
+.booked h3{ font-family:var(--serif); font-weight:300; font-size:clamp(2rem,4vw,3.2rem); line-height:.98; letter-spacing:-.03em; color:var(--paper); font-variation-settings:"opsz" 90; text-wrap:balance; }
+.booked h3 em{ font-style:italic; color:var(--marigold); font-variation-settings:"opsz" 90,"WONK" 1; }
+.booked > p{ font-weight:360; font-size:clamp(1.05rem,1.4vw,1.25rem); line-height:1.55; color:var(--oat-dim); max-width:54ch; font-variation-settings:"opsz" 24; }
+.booked > p strong{ color:var(--paper); font-weight:480; }
+.booked-meta{ display:flex; flex-wrap:wrap; gap:2.5rem; border-top:1px solid rgba(236,228,211,.14); border-bottom:1px solid rgba(236,228,211,.14); padding:1.5rem 0; }
+.booked-meta div{ display:grid; gap:.4rem; }
+.booked-meta dt{ font-family:var(--mono); font-size:.6rem; letter-spacing:.18em; text-transform:uppercase; color:var(--oat-quiet); }
+.booked-meta dd{ font-family:var(--mono); font-size:1rem; color:var(--paper); font-variant-numeric:tabular-nums; }
+.booked-meta dd.mark{ color:var(--marigold); font-weight:700; }
+.booked-fine{ font-family:var(--mono); font-size:.68rem; line-height:1.7; letter-spacing:.03em; color:var(--oat-quiet); }
+.booked-fine a{ color:var(--marigold); border-bottom:1px solid rgba(217,131,36,.4); padding-bottom:1px; }
+.booked-fine a:hover{ border-bottom-color:var(--marigold); }
+
+/* ── §05 the practical part — changeover + rates + policies + map, one section ── */
+.practical{ background:var(--paper); }
+.prac{ display:grid; gap:var(--sp-block); }
+
+/* the room — facts strip (relocated from the old daylight section) */
+.room-facts{ list-style:none; display:flex; flex-wrap:wrap; gap:.55rem 1.6rem; font-family:var(--mono); font-size:.72rem; letter-spacing:.03em; color:var(--ink-soft); }
+.room-facts li{ display:inline-flex; gap:.55ch; align-items:baseline; }
+.room-facts b{ color:var(--clay); font-weight:700; }
+
+/* changeover docket */
+.docket{ position:relative; background:var(--paper-3); border:1px solid rgba(20,17,11,.16); }
+.docket::before{ content:""; position:absolute; top:0; left:0; right:0; height:3px; background:var(--marigold); }
+.docket-h{ display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap; padding:clamp(1.1rem,2.5vw,1.5rem) clamp(1.2rem,2.5vw,1.9rem); border-bottom:1px dashed rgba(20,17,11,.22); }
+.docket-h .t{ font-family:var(--mono); font-size:.7rem; letter-spacing:.2em; text-transform:uppercase; color:var(--ink); }
+.docket-h .st{ font-family:var(--mono); font-size:.66rem; letter-spacing:.14em; text-transform:uppercase; color:var(--clay); display:inline-flex; align-items:center; gap:.5rem; }
+.docket-h .st::before{ content:""; width:7px; height:7px; border-radius:50%; background:var(--marigold); animation:beat 2.4s ease-in-out infinite; }
+.docket-list{ list-style:none; padding:clamp(.6rem,1.6vw,1rem) clamp(1.2rem,2.5vw,1.9rem); display:grid; grid-template-columns:repeat(4,1fr); gap:0 clamp(1.5rem,3vw,3rem); }
+@media (max-width:880px){ .docket-list{ grid-template-columns:repeat(2,1fr); } }
+@media (max-width:520px){ .docket-list{ grid-template-columns:1fr; } }
+.docket-list li{ display:flex; align-items:baseline; gap:.8rem; padding:.7rem 0; font-family:var(--mono); font-size:.76rem; letter-spacing:.01em; color:var(--ink-soft); border-bottom:1px solid rgba(20,17,11,.08); }
+.docket-list .tick{ color:var(--marigold-deep); font-size:.9rem; line-height:1; flex:0 0 auto; transform:translateY(1px); }
+.docket-foot{ display:flex; align-items:baseline; justify-content:space-between; gap:1rem; flex-wrap:wrap; padding:clamp(1rem,2.5vw,1.3rem) clamp(1.2rem,2.5vw,1.9rem); border-top:1px dashed rgba(20,17,11,.22); font-family:var(--mono); font-size:.7rem; letter-spacing:.06em; color:var(--moss); }
+.docket-foot .sign{ color:var(--clay); }
+
+/* rates */
+.rates-strip{ display:grid; gap:1rem; border-top:var(--rule-soft); padding-top:var(--sp-block); }
+.rates-h{ font-family:var(--mono); font-size:.66rem; letter-spacing:.18em; text-transform:uppercase; color:var(--moss); }
+.rates{ list-style:none; display:flex; flex-wrap:wrap; gap:.55rem; }
+.rates li{ display:inline-flex; align-items:baseline; gap:.5ch; padding:.5rem .85rem; border:1px solid rgba(20,17,11,.16); font-family:var(--mono); font-size:.7rem; letter-spacing:.06em; text-transform:uppercase; color:var(--moss); }
+.rates li b{ font-family:var(--serif); font-weight:480; font-size:1.02rem; letter-spacing:-.01em; color:var(--ink); font-variation-settings:"opsz" 22; text-transform:none; }
+.rates-note{ font-size:.98rem; line-height:1.5; color:var(--ink-soft); max-width:64ch; }
+.rates-note a{ color:var(--clay-deep); border-bottom:1px solid rgba(122,63,18,.35); }
+.rates-note a:hover{ border-color:var(--clay-deep); }
+
+/* policies — cancellation · refunds · terms */
+.policy-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:clamp(1.4rem,3vw,2.4rem) clamp(2rem,4vw,3.5rem); border-top:var(--rule-soft); padding-top:var(--sp-block); }
+@media (max-width:760px){ .policy-grid{ grid-template-columns:1fr; } }
+.pol .k{ font-family:var(--mono); font-size:.66rem; letter-spacing:.18em; text-transform:uppercase; color:var(--clay); display:block; margin-bottom:.6rem; }
+.pol p{ color:var(--ink-soft); line-height:1.55; max-width:46ch; }
+.pol p strong{ color:var(--ink); font-weight:560; }
+.pol a{ color:var(--clay-deep); border-bottom:1px solid rgba(122,63,18,.35); }
+.pol a:hover{ border-color:var(--clay-deep); }
+
+/* map */
+.map-frame{ position:relative; height:clamp(180px,26vh,300px); overflow:hidden; background:var(--umber-3); border:1px solid rgba(20,17,11,.16); }
+.map-frame iframe{ position:absolute; inset:0; width:100%; height:100%; border:0; filter:saturate(.72) contrast(1.04) sepia(.1); }
+.map-frame::after{ content:""; position:absolute; inset:0; pointer-events:none; box-shadow:inset 0 0 0 1px rgba(217,131,36,.12); background:radial-gradient(120% 120% at 50% 120%, rgba(217,131,36,.1), transparent 60%); }
+.map-tag{ position:absolute; z-index:2; top:1rem; left:1rem; font-family:var(--mono); font-size:.64rem; letter-spacing:.18em; text-transform:uppercase; color:var(--paper); background:rgba(12,24,18,.82); padding:.45rem .7rem; display:inline-flex; align-items:center; gap:.6rem; }
+.map-tag::before{ content:""; width:6px; height:6px; border-radius:50%; background:var(--marigold); }
+.map-foot{ display:flex; justify-content:space-between; flex-wrap:wrap; gap:.8rem; margin-top:1rem; font-family:var(--mono); font-size:.68rem; letter-spacing:.06em; color:var(--moss); }
+.map-foot a{ color:var(--clay-deep); border-bottom:1px solid rgba(122,63,18,.35); }
+.map-foot a:hover{ border-color:var(--clay-deep); }
+
+/* ── CTA strip ── */
+.cta{ background:var(--marigold); color:var(--umber-3); padding:clamp(3rem,6vw,5rem) 0; overflow:hidden; position:relative; }
+.cta .frame{ display:grid; grid-template-columns:1fr auto; gap:2rem; align-items:center; }
+@media (max-width:720px){ .cta .frame{ grid-template-columns:1fr; } }
+.cta h2{ font-family:var(--serif); font-weight:300; font-size:clamp(2rem,5.5vw,5rem); line-height:.95; letter-spacing:-.03em; color:var(--umber-3); font-variation-settings:"opsz" 120; text-wrap:balance; max-width:16ch; }
+.cta h2 em{ font-style:italic; color:rgba(12,24,18,.6); font-variation-settings:"opsz" 120,"WONK" 1; }
+.cta a.big{ font-family:var(--mono); font-size:.78rem; letter-spacing:.2em; text-transform:uppercase; color:var(--umber-3); border:1px solid var(--umber-3); padding:1.2rem 2rem; display:inline-flex; align-items:center; gap:1rem; transition:background .35s ease, color .35s ease; white-space:nowrap; }
+.cta a.big:hover{ background:var(--umber-3); color:var(--marigold); }
+.cta a.big .ar{ transition:transform .35s ease; } .cta a.big:hover .ar{ transform:translateX(6px); }
+
+/* ── footer ── */
+.foot{ background:var(--umber); color:var(--paper); padding:clamp(4rem,8vw,6rem) 0 2rem; }
+.foot-grid{ display:grid; grid-template-columns:1.5fr 1fr 1fr 1fr 1fr; gap:clamp(2rem,4vw,3.5rem); align-items:start; }
+@media (max-width:980px){ .foot-grid{ grid-template-columns:1fr 1fr 1fr; gap:2.5rem; } }
+@media (max-width:640px){ .foot-grid{ grid-template-columns:1fr 1fr; gap:2rem; } }
+@media (max-width:420px){ .foot-grid{ grid-template-columns:1fr; } }
+.foot .mark{ color:var(--paper); font-size:2rem; } .foot .mark .hr{ color:var(--marigold); }
+.foot .lede{ font-weight:360; font-size:1.05rem; line-height:1.5; color:rgba(236,228,211,.65); max-width:32ch; margin-top:1.2rem; font-variation-settings:"opsz" 20; }
+.fcol dt{ font-family:var(--mono); font-size:.68rem; letter-spacing:.2em; text-transform:uppercase; color:var(--oat-quiet); margin-bottom:1rem; }
+.fcol dd{ font-family:var(--mono); font-size:.82rem; color:var(--paper); margin-bottom:.35rem; letter-spacing:.03em; line-height:1.5; }
+.fcol dd a{ border-bottom:1px solid rgba(236,228,211,.2); transition:border-color .3s; } .fcol dd a:hover{ border-color:var(--marigold); }
+.foot-mark{ margin-top:clamp(3rem,7vw,5rem); font-family:var(--serif); font-weight:300; font-size:clamp(5rem,24vw,22rem); line-height:.8; letter-spacing:-.05em; color:rgba(236,228,211,.07); text-align:center; overflow:hidden; font-variation-settings:"opsz" 144; }
+.foot-mark em{ font-style:italic; color:rgba(217,131,36,.32); }
+.foot-bottom{ display:flex; justify-content:space-between; flex-wrap:wrap; gap:1rem; border-top:var(--rule-dk-soft); margin-top:1.5rem; padding-top:1.5rem; font-family:var(--mono); font-size:.68rem; letter-spacing:.12em; text-transform:uppercase; color:var(--oat-quiet); }
+
+/* reveal targets */
+.r-fade{ opacity:0; } .r-up{ opacity:0; transform:translateY(40px); }
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{ animation-duration:.01ms !important; transition-duration:.01ms !important; }
+  .r-fade,.r-up{ opacity:1; transform:none; }
+  .hero-title .row > span{ transform:none; }
+  .pull .w{ opacity:1; }
+}
+</style>
+</head>
+
+<body>
+
+<div class="cur" id="cur"></div>
+<div class="cur-ring" id="cur-ring"></div>
+
+<!-- ───────── topbar ───────── -->
+<header class="bar" role="banner">
+  <div class="frame">
+    <a class="mark" href="#top" aria-label="StudioONE — home">Studio<span class="hr">ONE</span></a>
+    <nav aria-label="Primary">
+      <a href="#days" data-cur="Read">The day</a>
+      <a href="#room" data-cur="Look">The room</a>
+      <a href="#care" data-cur="Upkeep">Upkeep</a>
+      <a href="#book" data-cur="Book">Book</a>
+    </nav>
+    <span class="status"><span id="status">Open · 07:00–22:00</span></span>
+  </div>
+</header>
+
+<main id="top">
+
+<!-- ───────── HERO ───────── -->
+<section class="hero" aria-labelledby="hero-title">
+  <div class="hero-inner">
+    <div class="frame">
+      <div class="hero-grid">
+        <div>
+          <div class="hero-eyebrow eyebrow r-fade">
+            <span>Sutton Village · Hull</span>
+            <span class="ln"></span>
+            <span>One room</span>
+            <span class="ln"></span>
+            <span>Est. 2026</span>
+          </div>
+          <h1 class="hero-title" id="hero-title">
+            <span class="row"><span>A room</span></span>
+            <span class="row"><span>kept by</span></span>
+            <span class="row"><span>the <em>hour.</em></span></span>
+          </h1>
+          <p class="hero-sub r-fade">Forty square metres, bare and daylit. Booked by the hour, up to eight at a time. Pay by transfer; the door code lands by email once it clears.</p>
+          <div class="hero-foot r-fade">
+            <div class="price">
+              <div class="n">£45<span class="u">first hour</span></div>
+              <div class="fine">Less for each after · no account</div>
+            </div>
+            <a href="#book" class="hero-cta" data-cur="Book">See the diary <span class="ar">→</span></a>
+          </div>
+        </div>
+
+        <!-- the day-arc -->
+        <div class="arc-wrap r-fade">
+          <svg id="arc" viewBox="0 0 880 510" role="img" aria-labelledby="arc-title">
+            <title id="arc-title">Today's open hours, 07:00 to 22:00, with the current time marked</title>
+            <line class="arc-base" x1="60" y1="470" x2="820" y2="470"></line>
+            <g id="arc-ticks"></g>
+            <path id="arc-track" class="arc-track"></path>
+            <g id="arc-booked-g"></g>
+            <path id="arc-elapsed" class="arc-elapsed"></path>
+            <g id="arc-sun"></g>
+            <text class="arc-lab" x="60" y="494" text-anchor="start">07:00</text>
+            <text class="arc-lab" x="820" y="494" text-anchor="end">22:00</text>
+          </svg>
+          <span class="arc-cap" id="arc-cap">the day, open to close</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </section>
+
+
+<!-- ───────── §01 manifesto ───────── -->
+<section class="manifesto" aria-labelledby="m-title">
+  <div class="frame man-frame">
+    <div class="chead">
+      <span class="cnum">01 — One room, on purpose</span>
+      <p class="clede">A class at seven in the morning. A birthday dinner that night. Same plaster, same floor, same room. Pay by transfer; the code arrives by email once it clears.</p>
+    </div>
+
+    <h2 class="pull" id="m-title">
+      <span class="w">One</span> <span class="w">room.</span>
+      <span class="w">Plain</span> <span class="w">enough</span> <span class="w">to</span> <span class="w">shoot</span> <span class="w">in.</span>
+      <span class="w">Quiet</span> <span class="w">enough</span> <span class="w">to</span> <span class="w">teach</span> <span class="w">in.</span>
+      <span class="w">Big</span> <span class="w">enough</span> <span class="w">to</span> <span class="w"><em>sit ten for dinner.</em></span>
+    </h2>
+
+    <dl class="man-foot">
+      <div><dt>Where</dt><dd>Sutton Village, Hull. Ground floor, step-free. Free street parking. Twelve minutes from the centre.</dd></div>
+      <div><dt>When</dt><dd>Daily, 07:00–22:00. Whole hours, one-hour minimum. An hour's reset between guests.</dd></div>
+      <div><dt>How</dt><dd>Pick a day, a start and how long. Pay by transfer; the code lands by email once it clears. Walk in. That's the whole of it.</dd></div>
+    </dl>
+  </div>
+</section>
+
+<!-- ───────── §02 one room, many days ───────── -->
+<section class="days chapter" id="days" aria-labelledby="days-title">
+  <div class="frame">
+    <div class="chead">
+      <span class="cnum">02 — One room, many days</span>
+      <div>
+        <h2 class="ctitle" id="days-title">Five kinds <em>of day.</em></h2>
+        <p class="clede">Some weeks all five. Some weeks the same one, every Tuesday.</p>
+      </div>
+    </div>
+
+    <ul class="kinds">
+      <li class="kind"><span class="kind-k">Dinners</span><p class="kind-l">A long table for ten — candles, takeaway from up the road, the kettle on as you <em>arrive.</em></p><span class="kind-t">Fri · evening</span></li>
+      <li class="kind"><span class="kind-k">Classes</span><p class="kind-l">Twelve mats, two hours, morning light through the two tall <em>sashes.</em></p><span class="kind-t">Tue · 07:00</span></li>
+      <li class="kind"><span class="kind-k">Shoots</span><p class="kind-l">North-east light, and nothing in the frame to <em>edit out.</em></p><span class="kind-t">Wed · daytime</span></li>
+      <li class="kind"><span class="kind-k">Quiet days</span><p class="kind-l">A laptop, the kettle, the door shut — warmer than the <em>library.</em></p><span class="kind-t">Thu · 09:00</span></li>
+      <li class="kind"><span class="kind-k">Workshops</span><p class="kind-l">Eight wheels, plenty of clay, a big sink, then a clean <em>reset.</em></p><span class="kind-t">Sat · daytime</span></li>
+    </ul>
+  </div>
+</section>
+
+<!-- ───────── §03 the room — a statement band ───────── -->
+<section class="roomhero" id="room" aria-labelledby="room-title">
+  <div class="frame">
+    <h2 class="roomhero-title" id="room-title">Bare. Daylit. <em>Looked after.</em></h2>
+  </div>
+</section>
+
+<!-- ───────── §04 how it works ───────── -->
+<section class="how chapter" aria-labelledby="how-title">
+  <div class="frame">
+    <div class="chead">
+      <span class="cnum">03 — How it works</span>
+      <div>
+        <h2 class="ctitle" id="how-title">Three steps. <em>That's it.</em></h2>
+        <p class="clede">Pick a time. Get a code. Walk in. No account, no subscription, no surprise at the door.</p>
+      </div>
+    </div>
+
+    <div class="steps">
+      <article class="step r-up"><span class="num">Step 01</span><h3>Pick <em>your time.</em></h3><p>Choose a day, a start time and how long you need. £45 the first hour and less for each after, one-hour minimum up to eight-hour days, booked in whole hours. Nothing to set up.</p></article>
+      <article class="step r-up"><span class="num">Step 02</span><h3>Get <em>the code.</em></h3><p>Pay by bank transfer with the reference shown at checkout. Once it clears, your door code arrives by email — usually the same working day.</p></article>
+      <article class="step r-up"><span class="num">Step 03</span><h3>Find <em>it ready.</em></h3><p>Reset between every guest. Cleaned, restocked, looked after. The room you booked is the room you walk into.</p></article>
+    </div>
+  </div>
+</section>
+
+<!-- ───────── §05 diary ───────── -->
+<section class="book chapter" id="book" aria-labelledby="book-title">
+  <div class="frame">
+    <div class="chead">
+      <span class="cnum">04 — The diary</span>
+      <div>
+        <h2 class="ctitle" id="book-title">Four weeks <em>out.</em></h2>
+        <p class="clede">Live availability, four weeks out. Choose a day on the calendar and its open hours appear beside it.</p>
+      </div>
+    </div>
+
+    <div class="booking" id="booking">
+      <div class="booking-meta"><span id="cal-month">&nbsp;</span><span class="r">Updated live</span></div>
+
+      <div class="diary">
+        <!-- step 1 — the calendar -->
+        <div class="cal-col">
+          <div class="cal-head" aria-hidden="true">
+            <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+          </div>
+          <div class="cal-grid" id="pick-days" role="radiogroup" aria-label="Pick a day, four weeks out" data-lenis-prevent></div>
+          <p class="cal-legend" aria-hidden="true">
+            <span class="lg lg-open">Open</span>
+            <span class="lg lg-some">Filling</span>
+            <span class="lg lg-full">Booked</span>
+          </p>
+          <p class="bhint">Further than four weeks out, or a recurring slot? <a href="mailto:hello@studioone.room?subject=Date%20enquiry%20%E2%80%94%20StudioONE">Message the studio</a> and we'll sort it.</p>
+        </div>
+
+        <!-- steps 2–4 — the slot panel -->
+        <div class="slot-col">
+          <div class="slot-head">
+            <span class="slot-k" id="slot-kicker">The diary</span>
+            <h2 class="slot-day empty" id="slot-day">Pick a day to begin.</h2>
+          </div>
+
+          <div class="slot-body">
+            <!-- step 2 — start time -->
+            <fieldset class="sblock" id="step-time" hidden>
+              <legend class="sblock-h">Start time</legend>
+              <div class="times" id="pick-times" aria-label="Available start times"></div>
+            </fieldset>
+
+            <!-- step 3 — length -->
+            <fieldset class="sblock" id="step-length" hidden>
+              <legend class="sblock-h">How long</legend>
+              <div class="length">
+                <div class="presets" id="pick-presets" role="group" aria-label="Common lengths"></div>
+                <div class="stepper">
+                  <button type="button" class="lstep" id="len-minus" aria-label="One hour shorter">−</button>
+                  <div class="lread"><span class="lspan" id="len-span">—</span><span class="lmeta" id="len-meta">whole hours · one-hour minimum</span></div>
+                  <button type="button" class="lstep" id="len-plus" aria-label="One hour longer">+</button>
+                </div>
+                <p class="len-note" id="len-note" hidden>Eight hours is the longest single booking. For a full day-plus or a block booking, <a href="mailto:hello@studioone.room?subject=Block%20booking%20%E2%80%94%20StudioONE">message the studio</a>.</p>
+              </div>
+            </fieldset>
+
+            <!-- step 4 — your details + bank transfer -->
+            <fieldset class="sblock" id="step-pay" hidden>
+              <legend class="sblock-h">Your details &amp; payment</legend>
+              <div class="bfields">
+                <div class="bfield">
+                  <label for="bk-name">Name</label>
+                  <input id="bk-name" type="text" name="name" autocomplete="name" placeholder="Who's the booking for?" required />
+                </div>
+                <div class="bfield">
+                  <label for="bk-email">Email</label>
+                  <input id="bk-email" type="email" name="email" autocomplete="email" inputmode="email" placeholder="Where your code should land" required />
+                </div>
+              </div>
+              <div class="pay">
+                <!-- PLACEHOLDER bank details — swap for the real StudioONE account before launch -->
+                <dl class="bacs">
+                  <div class="bacs-h"><span>Pay by bank transfer</span><span class="demo">Demo details</span></div>
+                  <div class="bacs-row"><dt>Account name</dt><dd>StudioONE</dd></div>
+                  <div class="bacs-row"><dt>Sort code</dt><dd>00-00-00</dd></div>
+                  <div class="bacs-row"><dt>Account no.</dt><dd>0000&nbsp;0000</dd></div>
+                  <div class="bacs-row ref"><dt>Reference</dt><dd id="bacs-ref">—</dd></div>
+                  <div class="bacs-row amt"><dt>Amount</dt><dd id="bacs-amt">—</dd></div>
+                </dl>
+                <p class="pay-note">Send the <strong>exact amount</strong> using the <strong>reference above</strong> so the studio can match your payment. Then press the button below to let us know it's on the way — your slot holds the moment you do, and the door code is emailed once the transfer clears.</p>
+                <button type="button" class="btn pay-btn" id="pay-confirm" aria-disabled="true">I've sent the payment <span class="ar" aria-hidden="true">→</span></button>
+              </div>
+            </fieldset>
+          </div>
+
+          <div class="bookbar">
+            <div class="summary" id="summary"><span class="empty">Pick a day to begin.</span></div>
+            <div class="bact">
+              <button class="ghost" type="button" id="clear" aria-disabled="true">Clear</button>
+              <a class="ghost" id="message-host" data-cur="Email"
+                 href="mailto:hello@studioone.room?subject=Booking%20enquiry%20%E2%80%94%20StudioONE">Message</a>
+              <button class="btn" type="button" id="confirm" aria-disabled="true">Continue to payment <span class="ar" aria-hidden="true">→</span></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="vh" id="book-live" role="status" aria-live="polite"></p>
+  </div>
+</section>
+
+<!-- ───────── §05 the practical part — changeover + fine print + map ───────── -->
+<section class="practical chapter" id="terms" aria-labelledby="prac-title">
+  <div class="frame">
+    <div class="chead">
+      <span class="cnum">05 — Before you book</span>
+      <div>
+        <h2 class="ctitle" id="prac-title">The practical part, <em>kept short.</em></h2>
+        <p class="clede">What the room is, how it's kept between bookings, what it costs — and where to find it.</p>
+      </div>
+    </div>
+
+    <div class="prac">
+      <ul class="room-facts" aria-label="The room">
+        <li><b>~40&nbsp;m²</b> ground floor</li>
+        <li><b>Oak</b> boards, sealed</li>
+        <li><b>North-east</b> light, two tall sashes</li>
+        <li><b>Step-free</b> wide door</li>
+        <li><b>Kettle</b>, fridge, sink</li>
+        <li><b>250&nbsp;Mbps</b> fibre</li>
+        <li><b>14</b> seated</li>
+        <li><b>Free</b> on-street parking</li>
+      </ul>
+
+      <aside class="docket" id="care" aria-label="What's done between every booking">
+        <div class="docket-h"><span class="t">Changeover record</span><span class="st">Ready</span></div>
+        <ul class="docket-list">
+          <li><span class="tick" aria-hidden="true">✓</span> Floors swept &amp; mopped</li>
+          <li><span class="tick" aria-hidden="true">✓</span> Surfaces wiped down</li>
+          <li><span class="tick" aria-hidden="true">✓</span> Chairs reset &amp; squared</li>
+          <li><span class="tick" aria-hidden="true">✓</span> Windows aired, blinds set</li>
+          <li><span class="tick" aria-hidden="true">✓</span> Kettle filled, mugs washed</li>
+          <li><span class="tick" aria-hidden="true">✓</span> Bins fresh, WC restocked</li>
+          <li><span class="tick" aria-hidden="true">✓</span> Heating &amp; lights set</li>
+          <li><span class="tick" aria-hidden="true">✓</span> Door code rolled over</li>
+        </ul>
+        <div class="docket-foot"><span id="reset-stamp">Last reset 09:18 · Hull</span><span class="sign">Self-access, start to finish — left ready for you</span></div>
+      </aside>
+
+      <div class="rates-strip">
+        <span class="rates-h">By the hour, kinder by the day</span>
+        <ul class="rates">
+          <li>1h <b>£45</b></li><li>2h <b>£80</b></li><li>3h <b>£110</b></li><li>4h <b>£140</b></li>
+          <li>5h <b>£170</b></li><li>6h <b>£200</b></li><li>7h <b>£225</b></li><li>8h <b>£250</b></li>
+        </ul>
+        <p class="rates-note">Every hour in between is priced to match; eight hours is the longest single booking, and you pay by bank transfer at checkout. Need a full day-plus or a block of dates? <a href="mailto:hello@studioone.room?subject=Block%20booking%20%E2%80%94%20StudioONE">Message the studio</a> and we'll set a rate.</p>
+      </div>
+
+      <div class="policy-grid">
+        <div class="pol">
+          <span class="k">Cancellation</span>
+          <p>Cancel or move a booking up to <strong>24 hours</strong> before the start and you're refunded in full. Inside 24 hours, the first hour is kept and the rest comes back.</p>
+        </div>
+        <div class="pol">
+          <span class="k">Refunds</span>
+          <p>Back to the account you paid from within <strong>5–10 working days</strong>. If the room is ever unavailable on our side — a leak, a power cut — you're refunded in full and offered the next free slot.</p>
+        </div>
+        <div class="pol">
+          <span class="k">Terms</span>
+          <p>Daily 07:00–22:00, whole hours, one-hour minimum, an hour's reset between guests. Leave it as you found it. Over-18s book; under-18s welcome with a booking adult present.</p>
+        </div>
+      </div>
+
+      <div class="mapband">
+        <div class="map-frame">
+          <span class="map-tag">Sutton Village · Hull</span>
+          <iframe
+            title="Map showing StudioONE in Sutton Village, Hull"
+            loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+            src="https://www.openstreetmap.org/export/embed.html?bbox=-0.3323%2C53.7703%2C-0.3083%2C53.7843&layer=mapnik&marker=53.7773%2C-0.3203"></iframe>
+        </div>
+        <div class="map-foot">
+          <span>53.7773° N · 0.3203° W · HU7</span>
+          <a href="https://www.openstreetmap.org/?mlat=53.7773&mlon=-0.3203#map=15/53.7773/-0.3203" target="_blank" rel="noopener noreferrer">Open in maps →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────── CTA ───────── -->
+<section class="cta" aria-labelledby="cta-title">
+  <div class="frame">
+    <h2 id="cta-title">An hour <em>is plenty.</em></h2>
+    <a href="#book" class="big" data-cur="Book">Reserve the room <span class="ar">→</span></a>
+  </div>
+</section>
+
+</main>
+
+<!-- ───────── footer ───────── -->
+<footer class="foot">
+  <div class="frame">
+    <div class="foot-grid">
+      <div>
+        <a class="mark" href="#top">Studio<span class="hr">ONE</span></a>
+        <p class="lede">A ground-floor room in Sutton Village, Hull. Let by the hour, every day.</p>
+      </div>
+      <dl class="fcol"><dt>Address</dt><dd>Sutton Village</dd><dd>Hull HU7</dd><dd>United Kingdom</dd></dl>
+      <dl class="fcol"><dt>Hours</dt><dd>Daily, 07:00–22:00</dd><dd>Reset between guests</dd><dd>Code by email</dd></dl>
+      <dl class="fcol"><dt>Contact</dt><dd><a href="mailto:hello@studioone.room">hello@studioone.room</a></dd><dd><a href="tel:+447700900482">07700 900 482</a></dd><dd>Replies within the hour</dd></dl>
+      <dl class="fcol"><dt>The fine print</dt><dd><a href="#terms">Cancellation</a></dd><dd><a href="#terms">Refunds</a></dd><dd><a href="#terms">Terms &amp; map</a></dd></dl>
+    </div>
+    <div class="foot-mark" aria-hidden="true">Studio<em>ONE</em></div>
+    <div class="foot-bottom"><span>StudioONE · HU7 · 2026</span><span>Built for the room, not the brief</span></div>
+  </div>
+</footer>
+
+<!-- Libraries load at end of body — they never block first paint, and the
+     init script below runs only after they've parsed and executed in order.
+     The whole experience degrades gracefully if any of them fail to load. -->
+<script src="https://unpkg.com/lenis@1.3.23/dist/lenis.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+<script>
+/* ════════════════════════════════════════════════════════
+   StudioONE — motion & interaction
+   Lenis smooth scroll · GSAP/ScrollTrigger · day-arc · diary
+   ════════════════════════════════════════════════════════ */
+(function(){
+  'use strict';
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ───────── Lenis ───────── */
+  var lenis;
+  if(!reduce && window.Lenis){
+    lenis = new Lenis({ duration:1.2, easing:function(t){return Math.min(1,1.001-Math.pow(2,-10*t));}, smoothWheel:true, touchMultiplier:1.6 });
+    function raf(t){ lenis.raf(t); requestAnimationFrame(raf); }
+    requestAnimationFrame(raf);
+    if(window.gsap && window.ScrollTrigger){
+      lenis.on('scroll', ScrollTrigger.update);
+      gsap.ticker.add(function(t){ lenis.raf(t*1000); });
+      gsap.ticker.lagSmoothing(0);
+    }
+    document.querySelectorAll('a[href^="#"]').forEach(function(a){
+      a.addEventListener('click', function(e){
+        var id=this.getAttribute('href');
+        if(id && id.length>1){ var t=document.querySelector(id); if(t){ e.preventDefault(); lenis.scrollTo(t,{offset:-20,duration:1.4}); } }
+      });
+    });
+  }
+
+  /* ───────── topbar pin ───────── */
+  var bar=document.querySelector('.bar'), hero=document.querySelector('.hero');
+  function upBar(){ if(!bar||!hero) return; var th=hero.offsetHeight*0.6; var y=window.scrollY||document.documentElement.scrollTop; bar.classList.toggle('pin', y>th); }
+  upBar(); window.addEventListener('scroll', upBar, {passive:true}); if(lenis) lenis.on('scroll', upBar);
+
+  /* ───────── custom cursor ───────── */
+  var cur=document.getElementById('cur'), ring=document.getElementById('cur-ring');
+  var fine=window.matchMedia('(hover:hover) and (pointer:fine)').matches;
+  if(cur && ring && fine && !reduce){
+    var mx=innerWidth/2,my=innerHeight/2,rx=mx,ry=my, curLive=false;
+    addEventListener('mousemove', function(e){
+      if(!curLive){ curLive=true; document.documentElement.classList.add('cur-live'); } /* confirm replacement is live before hiding native cursor */
+      mx=e.clientX; my=e.clientY; cur.style.transform='translate('+mx+'px,'+my+'px) translate(-50%,-50%)';
+    });
+    /* if the pointer ever returns to a coarse mode, hand the native cursor back */
+    addEventListener('pointerdown', function(e){ if(e.pointerType && e.pointerType!=='mouse'){ curLive=false; document.documentElement.classList.remove('cur-live'); } });
+    (function tick(){ rx+=(mx-rx)*.18; ry+=(my-ry)*.18; ring.style.transform='translate('+rx+'px,'+ry+'px) translate(-50%,-50%)'; requestAnimationFrame(tick); })();
+    document.querySelectorAll('a,button,[data-cur]').forEach(function(el){
+      el.addEventListener('mouseenter', function(){ var l=el.dataset.cur||(el.tagName==='BUTTON'?'Tap':'Open'); cur.setAttribute('data-label',l); cur.classList.add('on'); ring.classList.add('on'); });
+      el.addEventListener('mouseleave', function(){ cur.classList.remove('on'); ring.classList.remove('on'); });
+    });
+  }
+
+  /* ════════════════════════════════════════════════════════
+     DAY-ARC — sundial of the open day (07:00 → 22:00)
+     ════════════════════════════════════════════════════════ */
+  var OPEN=7, CLOSE=22, SPAN=CLOSE-OPEN;
+  var ARC = { cx:440, cy:470, r:360 };
+  function pol(cx,cy,r,deg){ var a=deg*Math.PI/180; return { x:cx+r*Math.cos(a), y:cy-r*Math.sin(a) }; }
+  function timeToDeg(t){ var p=Math.max(0,Math.min(1,(t-OPEN)/SPAN)); return 180-180*p; }
+  function arcD(cx,cy,r,d0,d1,steps){
+    steps=steps||90; var d='';
+    for(var i=0;i<=steps;i++){ var dg=d0+(d1-d0)*i/steps; var p=pol(cx,cy,r,dg); d+=(i?'L':'M')+p.x.toFixed(2)+' '+p.y.toFixed(2); }
+    return d;
+  }
+  function hhmmToFloat(s){ var p=s.split(':'); return parseInt(p[0],10)+parseInt(p[1],10)/60; }
+
+  function buildArc(){
+    var svg=document.getElementById('arc'); if(!svg) return;
+    var track=document.getElementById('arc-track');
+    var ticksG=document.getElementById('arc-ticks');
+    var bookedG=document.getElementById('arc-booked-g');
+    var elapsed=document.getElementById('arc-elapsed');
+    var sunG=document.getElementById('arc-sun');
+    var cap=document.getElementById('arc-cap');
+    var NS='http://www.w3.org/2000/svg';
+
+    // track
+    track.setAttribute('d', arcD(ARC.cx,ARC.cy,ARC.r,180,0,120));
+
+    // hour ticks
+    for(var h=OPEN; h<=CLOSE; h++){
+      var dg=timeToDeg(h), maj=(h===OPEN||h===CLOSE||h%4===0);
+      var inP=pol(ARC.cx,ARC.cy,ARC.r-(maj?16:9),dg);
+      var outP=pol(ARC.cx,ARC.cy,ARC.r+(maj?14:8),dg);
+      var ln=document.createElementNS(NS,'line');
+      ln.setAttribute('x1',inP.x.toFixed(2)); ln.setAttribute('y1',inP.y.toFixed(2));
+      ln.setAttribute('x2',outP.x.toFixed(2)); ln.setAttribute('y2',outP.y.toFixed(2));
+      ln.setAttribute('class','arc-tick'+(maj?' maj':''));
+      ticksG.appendChild(ln);
+    }
+    // a couple of mid labels (12:00, 17:00)
+    [12,17].forEach(function(h){
+      var p=pol(ARC.cx,ARC.cy,ARC.r+40,timeToDeg(h));
+      var tx=document.createElementNS(NS,'text');
+      tx.setAttribute('x',p.x.toFixed(1)); tx.setAttribute('y',(p.y).toFixed(1));
+      tx.setAttribute('text-anchor','middle'); tx.setAttribute('class','arc-lab');
+      tx.textContent=(h<10?'0':'')+h+':00';
+      ticksG.appendChild(tx);
+    });
+
+    // booked notches — today's bookings, from the same source the diary uses
+    var todayBookings = (window.BOOKINGS && window.BOOKINGS[0]) ? window.BOOKINGS[0] : [];
+    todayBookings.forEach(function(b){
+      var d0=timeToDeg(hhmmToFloat(b.s)), d1=timeToDeg(hhmmToFloat(b.e));
+      var pth=document.createElementNS(NS,'path');
+      pth.setAttribute('d', arcD(ARC.cx,ARC.cy,ARC.r,d0,d1,24));
+      pth.setAttribute('class','arc-booked');
+      bookedG.appendChild(pth);
+    });
+
+    // sun marker group
+    var halo=document.createElementNS(NS,'circle'); halo.setAttribute('r','18'); halo.setAttribute('class','arc-sun-halo');
+    var core=document.createElementNS(NS,'circle'); core.setAttribute('r','7'); core.setAttribute('class','arc-sun-core');
+    var lab =document.createElementNS(NS,'text'); lab.setAttribute('class','arc-sun-lab'); lab.setAttribute('text-anchor','middle');
+    sunG.appendChild(halo); sunG.appendChild(core); sunG.appendChild(lab);
+
+    var now=new Date();
+    var nowF=now.getHours()+now.getMinutes()/60;
+    var open = nowF>=OPEN && nowF<=CLOSE;
+    var hh=String(now.getHours()).padStart(2,'0'), mm=String(now.getMinutes()).padStart(2,'0');
+
+    function placeSun(t){
+      var dg=timeToDeg(t), p=pol(ARC.cx,ARC.cy,ARC.r,dg);
+      sunG.setAttribute('transform','translate('+p.x.toFixed(2)+','+p.y.toFixed(2)+')');
+      // keep label above the marker, nudged toward centre at the edges
+      lab.setAttribute('y', (-26).toString());
+      lab.setAttribute('x', (dg>120?14:dg<60?-14:0).toString());
+    }
+
+    function setElapsed(t){
+      elapsed.setAttribute('d', arcD(ARC.cx,ARC.cy,ARC.r,180,timeToDeg(t),120));
+    }
+
+    if(!open){
+      // closed: park sun at nearest end, dim it
+      var endT = nowF<OPEN ? OPEN : CLOSE;
+      placeSun(endT); setElapsed(endT);
+      core.style.opacity='.5'; halo.style.opacity='.08';
+      lab.textContent='Closed';
+      if(cap) cap.textContent = nowF<OPEN ? 'opens 07:00' : 'closed for the day';
+      return;
+    }
+
+    lab.textContent = hh+':'+mm;
+    if(cap) cap.textContent='now · '+hh+':'+mm+' in Hull';
+
+    if(reduce || typeof gsap==='undefined'){
+      placeSun(nowF); setElapsed(nowF);
+    } else {
+      // animate sun sweeping 07:00 → now, elapsed arc drawing behind it
+      var st={ t:OPEN };
+      gsap.to(st, {
+        t: nowF, duration:1.7, delay:.5, ease:'power2.out',
+        onUpdate:function(){ placeSun(st.t); setElapsed(st.t); }
+      });
+      // gentle idle pulse on the halo
+      gsap.to(halo, { attr:{ r:24 }, opacity:.12, duration:2.4, repeat:-1, yoyo:true, ease:'sine.inOut', delay:2.2 });
+    }
+  }
+  /* buildArc() is now called from boot(), after availability loads, so the arc
+     and the diary always reflect the same data. */
+
+  /* ───────── live status ───────── */
+  function status(){
+    var d=new Date(), h=d.getHours(), m=String(d.getMinutes()).padStart(2,'0');
+    var open=h>=7 && h<22;
+    var s=document.getElementById('status'); if(s) s.textContent=(open?'Open':'Closed')+' · '+String(h).padStart(2,'0')+':'+m+' · Hull';
+  }
+  status(); setInterval(status, 60000);
+
+  /* between-bookings docket — a recent, live-feeling reset time */
+  (function(){
+    var el=document.getElementById('reset-stamp'); if(!el) return;
+    var ago=25+Math.floor(Math.random()*30);                 /* 25–55 min ago */
+    var d=new Date(Date.now()-ago*60000);
+    function p2(n){ return (n<10?'0':'')+n; }
+    el.textContent='Last reset '+p2(d.getHours())+':'+p2(d.getMinutes())+' · Hull';
+  })();
+
+  /* ════════════════════════════════════════════════════════
+     GSAP cinematic reveals
+     ════════════════════════════════════════════════════════ */
+  if(window.gsap && window.ScrollTrigger && !reduce){
+    gsap.registerPlugin(ScrollTrigger);
+
+    var heroTl=gsap.timeline({ delay:.15 });
+    heroTl
+      .to('.hero-eyebrow', { opacity:1, duration:.9, ease:'power2.out' }, 0)
+      .to('.hero-title .row > span', { y:'0%', duration:1.4, ease:'expo.out', stagger:.12 }, .1)
+      .to('.hero-sub', { opacity:1, duration:1, ease:'power2.out' }, .8)
+      .to('.hero-foot', { opacity:1, duration:1, ease:'power2.out' }, .95)
+      .to('.arc-wrap', { opacity:1, duration:1.1, ease:'power2.out' }, .5);
+
+    /* manifesto word reveal */
+    var words=document.querySelectorAll('.pull .w');
+    if(words.length){
+      ScrollTrigger.create({
+        trigger:'.manifesto', start:'top 65%', end:'center 30%', scrub:.4,
+        onUpdate:function(st){ var n=Math.floor(st.progress*words.length*1.15); words.forEach(function(w,i){ w.classList.toggle('on', i<=n); }); }
+      });
+    }
+
+    /* chapter chrome */
+    gsap.utils.toArray('.ctitle').forEach(function(el){
+      gsap.fromTo(el, { y:50, opacity:0, clipPath:'inset(-20% 0 100% 0)' },
+        { y:0, opacity:1, clipPath:'inset(-20% -10% -20% -10%)', duration:1.4, ease:'expo.out', scrollTrigger:{ trigger:el, start:'top 85%' } });
+    });
+    gsap.utils.toArray('.clede').forEach(function(el){
+      gsap.fromTo(el, { y:30, opacity:0 }, { y:0, opacity:1, duration:1, delay:.15, ease:'power3.out', scrollTrigger:{ trigger:el, start:'top 88%' } });
+    });
+    gsap.utils.toArray('.cnum').forEach(function(el){
+      gsap.fromTo(el, { x:-20, opacity:0 }, { x:0, opacity:1, duration:1, ease:'power3.out', scrollTrigger:{ trigger:el, start:'top 90%' } });
+    });
+    gsap.utils.toArray('.step.r-up').forEach(function(el,i){
+      gsap.fromTo(el, { y:60, opacity:0 }, { y:0, opacity:1, duration:1.1, ease:'expo.out', delay:i*.08, scrollTrigger:{ trigger:el, start:'top 85%' } });
+    });
+    /* footer mark drift */
+    gsap.fromTo('.foot-mark', { letterSpacing:'-0.03em' }, { letterSpacing:'-0.06em', ease:'none', scrollTrigger:{ trigger:'.foot', start:'top bottom', end:'bottom bottom', scrub:1 } });
+
+    if(document.fonts && document.fonts.ready){ document.fonts.ready.then(function(){ ScrollTrigger.refresh(); }); }
+  } else if(reduce){
+    document.querySelectorAll('.hero-title .row > span').forEach(function(s){ s.style.transform='none'; });
+    document.querySelectorAll('.r-fade,.r-up').forEach(function(s){ s.style.opacity=1; s.style.transform='none'; });
+    document.querySelectorAll('.pull .w').forEach(function(w){ w.classList.add('on'); });
+  }
+
+  /* ════════════════════════════════════════════════════════
+     BOOKING DIARY
+     ════════════════════════════════════════════════════════ */
+  var DAY_NAMES=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var MONTH_NAMES=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var START_HOUR=7, END_HOUR=22;
+  var HOURS_PER_DAY=END_HOUR-START_HOUR;       /* 15 one-hour blocks, 07:00–22:00 */
+  var MIN_RUN=1, MAX_RUN=8, RESET_HOURS=1;     /* whole-hour bookings · 1h min · 8h max · 1h reset between */
+  var DAYS_AHEAD=28;                            /* how far the self-serve diary runs; beyond this → message */
+  /* Tiered session pricing, by whole hours. Anchors set by the studio:
+     1h £45 · 2h £80 · 4h £140 · 8h £250; the gaps taper between them.
+     Eight hours is the hard cap; longer / block bookings → contact. */
+  var PRICE={ 1:45, 2:80, 3:110, 4:140, 5:170, 6:200, 7:225, 8:250 };
+  function priceFor(h){ return (PRICE[h]!=null) ? PRICE[h] : Math.round(h*45); }
+
+  var today=new Date(); today.setHours(0,0,0,0);
+
+  /* ── service layer ──────────────────────────────────────────
+     Presentation stays separate from data. The picker boots from
+     StudioOne.Availability.fetch() and writes back through
+     StudioOne.Booking.create(). Both are mocks today; swap their
+     bodies for fetch()/WebSocket against the Railway backend and
+     nothing in the UI below has to change. Data shape is fixed:
+       { [dayIndex 0..6]: [ { s:'HH:MM', e:'HH:MM', label } ] }
+     Times may be any clock value; the model rounds each booking out
+     to the whole hours it touches and reserves a 1h reset each side.
+     ──────────────────────────────────────────────────────────── */
+  var StudioOne = window.StudioOne = {
+    config:{ apiBase:'', rate:45, openHour:START_HOUR, closeHour:END_HOUR, minHours:MIN_RUN, maxHours:MAX_RUN, resetHours:RESET_HOURS },
+    Availability:{
+      /* → replace with: fetch(StudioOne.config.apiBase+'/availability').then(r=>r.json()) */
+      fetch:function(){
+        return Promise.resolve({
+          0:[ {s:'09:00',e:'11:00',label:'Held'}, {s:'14:00',e:'16:00',label:'Shoot'} ],
+          1:[ {s:'07:00',e:'09:00',label:'Class · weekly'}, {s:'18:00',e:'21:00',label:'Dinner'} ],
+          2:[ {s:'10:00',e:'13:00',label:'Workshop'} ],
+          3:[ {s:'08:00',e:'10:00',label:'Class'}, {s:'12:00',e:'14:00',label:'Held'} ],
+          4:[ {s:'19:00',e:'22:00',label:'Dinner'} ],
+          5:[ {s:'10:00',e:'16:00',label:'Workshop'} ],
+          6:[]
+        });
+      }
+    },
+    Booking:{
+      /* → replace with: POST StudioOne.config.apiBase+'/bookings' carrying the
+         { name, email, ref, day, start, end, hours, price } payload. The server
+         records the slot as PENDING, emails the studio a confirm link, and returns
+         { ok, status:'pending', ref }. The studio's confirmation is what emails the
+         guest their door code — no code or charge happens client-side. */
+      create:function(payload){
+        return new Promise(function(resolve){
+          setTimeout(function(){ resolve({ ok:true, status:'pending', ref:payload.ref }); }, 500);
+        });
+      }
+    }
+  };
+
+  var BOOKINGS={};
+
+  function hhmmToMin(s){ var p=s.split(':'); return parseInt(p[0],10)*60 + parseInt(p[1],10); }
+  function clockOf(i){ return START_HOUR + i; }                          /* hour-block index → clock hour */
+  function hourLabel(i){ return String(clockOf(i)).padStart(2,'0')+':00'; }
+  function money(v){ return '£'+v.toFixed(0); }
+  function dur(h){ return h===1 ? '1 hour' : h+' hours'; }
+
+  var daySlots=[];
+  function build(){
+    daySlots=[]; var nowMin=new Date().getHours()*60+new Date().getMinutes(), reset=RESET_HOURS*60;
+    for(var d=0; d<DAYS_AHEAD; d++){
+      var arr=new Array(HOURS_PER_DAY).fill('free'), list=BOOKINGS[d]||[];
+      for(var b=0;b<list.length;b++){
+        var bs=hhmmToMin(list[b].s), be=hhmmToMin(list[b].e);
+        for(var h=0; h<HOURS_PER_DAY; h++){
+          var blkS=(START_HOUR+h)*60, blkE=blkS+60;
+          if(bs<blkE && be>blkS){ arr[h]='booked'; }                                                  /* overlaps the booking */
+          else if(arr[h]==='free' && ((blkS>=be && blkS<be+reset) || (blkE>bs-reset && blkE<=bs))){    /* 1h reset, each side */
+            arr[h]='buffer';
+          }
+        }
+      }
+      if(d===0){ for(var k=0;k<HOURS_PER_DAY;k++){ if((START_HOUR+k)*60<nowMin && arr[k]==='free') arr[k]='past'; } }
+      daySlots.push(arr);
+    }
+  }
+
+  /* ── booking: one simple flow for everyone ──────────────────
+     Pick a day → choose a start → set the length. The dense grid
+     is gone; this is the model the everyday booker actually holds
+     in their head. One state (sel), read back into the summary,
+     the message link and the confirm button. ────────────────── */
+  var sel={dayIdx:null,start:null,end:null};
+  var summary=document.getElementById('summary'),
+      live=document.getElementById('book-live'),
+      clearBtn=document.getElementById('clear'),
+      confirmBtn=document.getElementById('confirm'),
+      msgBtn=document.getElementById('message-host'),
+      pickDays=document.getElementById('pick-days'),
+      pickTimes=document.getElementById('pick-times'),
+      pickPresets=document.getElementById('pick-presets'),
+      stepTime=document.getElementById('step-time'),
+      stepLength=document.getElementById('step-length'),
+      lenMinus=document.getElementById('len-minus'),
+      lenPlus=document.getElementById('len-plus'),
+      lenSpan=document.getElementById('len-span'),
+      lenMeta=document.getElementById('len-meta'),
+      lenNote=document.getElementById('len-note');
+  var stepPay=document.getElementById('step-pay'),
+      nameInput=document.getElementById('bk-name'),
+      emailInput=document.getElementById('bk-email'),
+      bacsRef=document.getElementById('bacs-ref'),
+      bacsAmt=document.getElementById('bacs-amt'),
+      payBtn=document.getElementById('pay-confirm');
+  var payRef=null;
+
+  function dateFor(d){ var x=new Date(today); x.setDate(today.getDate()+d); return x; }
+  function dayLabel(d){ var x=dateFor(d); return (d===0?'Today':DAY_NAMES[x.getDay()])+' '+x.getDate()+' '+MONTH_NAMES[x.getMonth()]; }
+  function dayLong(d){ var x=dateFor(d); var nm=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][x.getDay()]; return (d===0?'today, '+nm:nm)+' the '+ordinal(x.getDate()); }
+  function ordinal(n){ var s=['th','st','nd','rd'], v=n%100; return n+(s[(v-20)%10]||s[v]||s[0]); }
+  function freeCount(d){ var n=0,a=daySlots[d]; for(var i=0;i<HOURS_PER_DAY;i++) if(a[i]==='free') n++; return n; }
+  function reachEnd(d,start,cand){ var sl=daySlots[d]; if(cand>=start){ var i=start; while(i<=cand && i<HOURS_PER_DAY && sl[i]==='free') i++; return i; } else { var j=start-1; while(j>=cand && j>=0 && sl[j]==='free') j--; return j+1; } }
+  function maxEnd(d,start){ return Math.min(reachEnd(d,start,HOURS_PER_DAY-1), start+MAX_RUN); }
+  function fitsMin(d,i){ return reachEnd(d,i,i+MIN_RUN-1)-i>=MIN_RUN; }
+
+  /* ════ step 1 · the calendar (four weeks out) ════ */
+  var MONTH_FULL=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  function leadDays(){ return (today.getDay()+6)%7; }          /* Mon=0 … Sun=6 → whole days since Monday */
+  function calWeeks(){ return Math.ceil((leadDays()+DAYS_AHEAD)/7); }
+  function setMonthLabel(){
+    var el=document.getElementById('cal-month'); if(!el) return;
+    var lead=leadDays(), a=dateFor(-lead), b=dateFor(calWeeks()*7-1-lead);
+    var ya=a.getFullYear(), yb=b.getFullYear();
+    el.textContent = (a.getMonth()===b.getMonth())
+      ? MONTH_FULL[a.getMonth()]+' '+yb
+      : MONTH_FULL[a.getMonth()]+(ya!==yb?' '+ya:'')+' – '+MONTH_FULL[b.getMonth()]+' '+yb;
+  }
+  function buildDays(){
+    if(!pickDays) return; pickDays.innerHTML='';
+    var lead=leadDays(), cells=calWeeks()*7, firstBookable=null;
+    for(var i=0;i<cells;i++){
+      var off=i-lead, x=dateFor(off);                          /* row-major, Monday-first; off = days from today */
+      if(off<0 || off>=DAYS_AHEAD){
+        var out=document.createElement('div'); out.className='cell out'; out.setAttribute('aria-hidden','true');
+        out.innerHTML='<span class="cd">'+x.getDate()+'</span>';
+        pickDays.appendChild(out); continue;
+      }
+      var n=freeCount(off), ratio=Math.round((n/HOURS_PER_DAY)*100);
+      var lvl = n===0 ? 'full' : n<=4 ? 'some' : 'open';
+      var b=document.createElement('button'); b.type='button';
+      b.className='cell day '+lvl+(off===0?' today':'');
+      b.setAttribute('role','radio'); b.setAttribute('aria-checked','false'); b.tabIndex=-1;
+      b.dataset.day=off;
+      b.setAttribute('aria-label', dayLong(off)+' — '+(n?n+(n===1?' hour':' hours')+' free':'fully booked'));
+      b.innerHTML='<span class="cd" aria-hidden="true">'+x.getDate()+'</span>'
+        +(off===0?'<span class="ct" aria-hidden="true">Today</span>':'')
+        +'<span class="cmeter" aria-hidden="true"><i style="width:'+ratio+'%"></i></span>';
+      b.addEventListener('click', function(ev){ chooseDay(+ev.currentTarget.dataset.day); });
+      b.addEventListener('keydown', onDayKey);
+      if(firstBookable===null) firstBookable=b;
+      pickDays.appendChild(b);
+    }
+    if(firstBookable) firstBookable.tabIndex=0;                /* a single tab stop into the grid until a day is chosen */
+    setMonthLabel();
+  }
+  function onDayKey(e){
+    var d=+e.currentTarget.dataset.day, nd=d;
+    switch(e.key){
+      case 'ArrowRight': nd=d+1; break;
+      case 'ArrowLeft':  nd=d-1; break;
+      case 'ArrowDown':  nd=d+7; break;
+      case 'ArrowUp':    nd=d-7; break;
+      case 'Home':       nd=0; break;
+      case 'End':        nd=DAYS_AHEAD-1; break;
+      default: return;                                        /* Enter / Space select via the native button */
+    }
+    nd=Math.max(0, Math.min(DAYS_AHEAD-1, nd));
+    e.preventDefault(); if(nd===d) return;                    /* arrows move focus only; selection stays on Enter/click */
+    var all=pickDays.querySelectorAll('.day'), t=pickDays.querySelector('.day[data-day="'+nd+'"]');
+    if(t){ for(var k=0;k<all.length;k++) all[k].tabIndex=(all[k]===t?0:-1); t.focus(); }
+  }
+  function chooseDay(d){
+    closePay();
+    sel={dayIdx:d, start:null, end:null};
+    var days=pickDays.querySelectorAll('.day');
+    for(var k=0;k<days.length;k++){ var on=+days[k].dataset.day===d; days[k].setAttribute('aria-checked', on?'true':'false'); days[k].tabIndex=on?0:-1; }
+    var free=freeCount(d);
+    var kick=document.getElementById('slot-kicker'); if(kick) kick.textContent = free ? 'Chosen day' : 'Fully booked';
+    var dh=document.getElementById('slot-day'); if(dh){ dh.textContent=dayLabel(d); dh.classList.remove('empty'); }
+    buildTimes(d);
+    if(stepTime) stepTime.hidden=false;
+    if(stepLength) stepLength.hidden=true;
+    summarize();
+  }
+
+  /* ════ step 2 · choose a start (grouped by part of day) ════ */
+  function partName(i){ var h=START_HOUR+i; return h<12?'Morning':h<17?'Afternoon':'Evening'; }
+  function buildTimes(d){
+    if(!pickTimes) return; pickTimes.innerHTML='';
+    var groups=[['Morning',[]],['Afternoon',[]],['Evening',[]]], idx={Morning:0,Afternoon:1,Evening:2}, any=false;
+    for(var i=0;i<HOURS_PER_DAY;i++){ if(daySlots[d][i]==='free' && fitsMin(d,i)) groups[idx[partName(i)]][1].push(i); }
+    for(var g=0; g<groups.length; g++){
+      var name=groups[g][0], list=groups[g][1]; if(!list.length) continue; any=true;
+      var sec=document.createElement('div'); sec.className='tgroup';
+      var h=document.createElement('div'); h.className='tgroup-h'; h.textContent=name; sec.appendChild(h);
+      var grid=document.createElement('div'); grid.className='tgrid';
+      for(var j=0;j<list.length;j++){ var s=list[j];
+        var b=document.createElement('button'); b.type='button'; b.className='time';
+        b.dataset.day=d; b.dataset.slot=s; b.setAttribute('aria-pressed','false');
+        b.setAttribute('aria-label','Start at '+hourLabel(s)); b.textContent=hourLabel(s);
+        b.addEventListener('click', function(ev){ chooseStart(+ev.currentTarget.dataset.day, +ev.currentTarget.dataset.slot); });
+        grid.appendChild(b);
+      }
+      sec.appendChild(grid); pickTimes.appendChild(sec);
+    }
+    if(!any){ var p=document.createElement('p'); p.className='times-empty'; p.textContent='No openings long enough that day — try another day, or message the studio and we’ll sort something out.'; pickTimes.appendChild(p); }
+  }
+  function chooseStart(d,i){
+    closePay();
+    sel.dayIdx=d; sel.start=i; sel.end=Math.min(i+MIN_RUN, maxEnd(d,i)); if(sel.end-sel.start<MIN_RUN) sel.end=sel.start+MIN_RUN;
+    var btns=pickTimes.querySelectorAll('.time'); for(var k=0;k<btns.length;k++) btns[k].setAttribute('aria-pressed', (+btns[k].dataset.slot===i && +btns[k].dataset.day===d)?'true':'false');
+    buildPresets(d,i);
+    if(stepLength) stepLength.hidden=false;
+    updateLength(); summarize();
+  }
+
+  /* ════ step 3 · how long (presets + hourly stepper) ════ */
+  function buildPresets(d,i){
+    if(!pickPresets) return; pickPresets.innerHTML='';
+    var cap=maxEnd(d,i), defs=[['1 hour',1],['2 hours',2],['Half day',4],['Full day',8]];
+    for(var p=0;p<defs.length;p++){ var hours=defs[p][1]; if(i+hours>cap) continue;
+      var b=document.createElement('button'); b.type='button'; b.className='preset'; b.dataset.hours=hours;
+      b.setAttribute('aria-pressed','false'); b.setAttribute('aria-label',defs[p][0]+', '+money(priceFor(hours)));
+      b.innerHTML=defs[p][0]+' <span class="pp">'+money(priceFor(hours))+'</span>';
+      b.addEventListener('click', function(ev){ setLength(+ev.currentTarget.dataset.hours); });
+      pickPresets.appendChild(b);
+    }
+  }
+  function setLength(hours){ if(sel.start===null) return; var cap=maxEnd(sel.dayIdx,sel.start); sel.end=Math.min(Math.max(sel.start+hours, sel.start+MIN_RUN), cap); closePay(); updateLength(); summarize(); }
+  function stepLen(dir){ if(sel.start===null) return; var ne=sel.end+dir; if(ne<sel.start+MIN_RUN || ne>maxEnd(sel.dayIdx,sel.start)) return; sel.end=ne; closePay(); updateLength(); summarize(); }
+  function updateLength(){
+    if(sel.start===null) return; var hours=sel.end-sel.start;
+    if(lenSpan) lenSpan.textContent=hourLabel(sel.start)+'–'+hourLabel(sel.end);
+    if(lenMeta) lenMeta.textContent=dur(hours)+' · '+money(priceFor(hours));
+    if(lenMinus) lenMinus.disabled = sel.end<=sel.start+MIN_RUN;
+    if(lenPlus) lenPlus.disabled = sel.end>=maxEnd(sel.dayIdx,sel.start);
+    if(lenNote) lenNote.hidden = hours < MAX_RUN;
+    if(pickPresets){ var ps=pickPresets.querySelectorAll('.preset'); for(var k=0;k<ps.length;k++) ps[k].setAttribute('aria-pressed', (+ps[k].dataset.hours===hours)?'true':'false'); }
+  }
+  if(lenMinus) lenMinus.addEventListener('click', function(){ stepLen(-1); });
+  if(lenPlus) lenPlus.addEventListener('click', function(){ stepLen(1); });
+
+  /* ════ shared output: summary, live announce, message link ════ */
+  function summarize(){
+    var canBook=false, vis='', say='';
+    if(sel.dayIdx===null){
+      vis='<span class="empty">Pick a day to begin.</span>';
+    } else if(sel.start===null){
+      vis='<span class="empty">Choose a start time above.</span>';
+      say=dayLabel(sel.dayIdx)+' selected. Choose a start time.';
+    } else {
+      var hours=sel.end-sel.start, price=priceFor(hours);
+      vis='<span>'+hourLabel(sel.start)+'–'+hourLabel(sel.end)+' · '+dur(hours)+'</span><strong>'+money(price)+'</strong>';
+      say=dayLong(sel.dayIdx)+', '+hourLabel(sel.start)+' to '+hourLabel(sel.end)+', '+dur(hours)+', '+money(price)+'. Ready to confirm.';
+      canBook=true;
+    }
+    if(summary) summary.innerHTML=vis;
+    if(live && say) live.textContent=say;
+    if(confirmBtn){ if(canBook) confirmBtn.removeAttribute('aria-disabled'); else confirmBtn.setAttribute('aria-disabled','true'); }
+    if(clearBtn){ if(sel.start!==null) clearBtn.removeAttribute('aria-disabled'); else clearBtn.setAttribute('aria-disabled','true'); }
+    updateMessageHref();
+  }
+
+  /* §7 escape hatch: message the studio, pre-filled with the slot if one is chosen */
+  function updateMessageHref(){
+    if(!msgBtn) return;
+    var subj='Booking enquiry — StudioONE', body='Hi there,%0D%0A%0D%0A';
+    if(sel.start!==null){
+      var hours=sel.end-sel.start;
+      subj='StudioONE — '+dayLabel(sel.dayIdx)+' '+hourLabel(sel.start)+'–'+hourLabel(sel.end);
+      body+='I\'d like to ask about '+dayLong(sel.dayIdx)+', '+hourLabel(sel.start)+' to '+hourLabel(sel.end)+' ('+dur(hours)+', '+money(priceFor(hours))+').%0D%0A%0D%0A';
+    } else if(sel.dayIdx!==null){
+      subj='StudioONE — '+dayLabel(sel.dayIdx);
+      body+='I\'d like to ask about '+dayLong(sel.dayIdx)+'.%0D%0A%0D%0A';
+    } else {
+      body+='I\'d like to ask about availability.%0D%0A%0D%0A';
+    }
+    msgBtn.setAttribute('href','mailto:hello@studioone.room?subject='+encodeURIComponent(subj)+'&body='+body);
+  }
+
+  function clearSel(){
+    /* keep the chosen day; clear the time + length so they can re-pick */
+    sel.start=null; sel.end=null;
+    if(pickTimes){ var b=pickTimes.querySelectorAll('.time'); for(var k=0;k<b.length;k++) b[k].setAttribute('aria-pressed','false'); }
+    if(stepLength) stepLength.hidden=true;
+    closePay();
+    if(confirmBtn) confirmBtn.innerHTML='Continue to payment <span class="ar" aria-hidden="true">→</span>';
+    summarize();
+    if(live) live.textContent='Time cleared.';
+  }
+  if(clearBtn) clearBtn.addEventListener('click', function(){ if(clearBtn.getAttribute('aria-disabled')==='true') return; clearSel(); });
+
+  /* ── step 4: details + bank transfer ─────────────────────────
+     Manual-settlement flow. The guest enters name + email, gets a
+     unique reference and the account details, transfers the fee, then
+     flags it. That POST records the slot as PENDING and emails the studio;
+     his confirmation (server-side) is what emails the door code out.
+     Nothing is charged here. ──────────────────────────────────── */
+  function reEmail(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+  function payReady(){ return sel.start!==null && nameInput && emailInput && nameInput.value.trim()!=='' && reEmail(emailInput.value.trim()); }
+  function refreshPay(){ if(payBtn){ if(payReady()) payBtn.removeAttribute('aria-disabled'); else payBtn.setAttribute('aria-disabled','true'); } }
+  if(nameInput) nameInput.addEventListener('input', refreshPay);
+  if(emailInput) emailInput.addEventListener('input', refreshPay);
+
+  function genRef(){ return 'S1-'+Date.now().toString(36).toUpperCase().slice(-6); }
+  function openPay(){
+    if(sel.start===null) return;
+    payRef=genRef();
+    if(bacsRef) bacsRef.textContent=payRef;
+    if(bacsAmt) bacsAmt.textContent=money(priceFor(sel.end-sel.start));
+    if(stepPay) stepPay.hidden=false;
+    if(confirmBtn) confirmBtn.hidden=true;
+    refreshPay();
+    if(nameInput) nameInput.focus({preventScroll:true});
+    if(live) live.textContent='Payment details ready. Enter your name and email, transfer the amount with reference '+payRef+', then confirm.';
+  }
+  function closePay(){
+    if(stepPay) stepPay.hidden=true;
+    if(confirmBtn) confirmBtn.hidden=false;
+    payRef=null;
+  }
+
+  if(confirmBtn) confirmBtn.addEventListener('click', function(){
+    if(confirmBtn.getAttribute('aria-disabled')==='true' || sel.start===null) return;
+    openPay();
+  });
+
+  function esc(v){ return String(v).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  function renderPending(p){
+    var box=document.getElementById('booking');
+    if(box){
+      box.innerHTML=
+        '<div class="booked">'+
+          '<span class="booked-k">Awaiting payment</span>'+
+          '<h3>Thanks, '+esc(p.name)+'. <em>Almost there.</em></h3>'+
+          '<p>We\u2019ve let the studio know to look out for your transfer. The moment it clears \u2014 usually the same working day \u2014 your door code lands by email at <strong>'+esc(p.email)+'</strong>. Nothing\u2019s confirmed until that email arrives.</p>'+
+          '<dl class="booked-meta">'+
+            '<div><dt>Slot</dt><dd>'+p.day+' \u00b7 '+p.start+'\u2013'+p.end+'</dd></div>'+
+            '<div><dt>Reference</dt><dd class="mark">'+p.ref+'</dd></div>'+
+            '<div><dt>Amount</dt><dd class="mark">'+money(p.price)+'</dd></div>'+
+          '</dl>'+
+          '<p class="booked-fine">Haven\u2019t sent it yet? Transfer '+money(p.price)+' with reference '+p.ref+'. Something to ask first? <a href="mailto:hello@studioone.room?subject='+encodeURIComponent('Booking '+p.ref+' \u2014 StudioONE')+'">Message the studio</a>.</p>'+
+        '</div>';
+    }
+    var bact=document.querySelector('.bact'); if(bact) bact.hidden=true;
+    if(summary) summary.innerHTML='<span class="empty">Payment flagged \u2014 your code will be emailed once it clears.</span>';
+    if(live) live.textContent='Payment flagged. Reference '+p.ref+'. Your door code will be emailed to '+p.email+' once it clears.';
+  }
+
+  if(payBtn) payBtn.addEventListener('click', function(){
+    if(payBtn.getAttribute('aria-disabled')==='true' || !payReady()) return;
+    var hours=sel.end-sel.start;
+    var payload={ name:nameInput.value.trim(), email:emailInput.value.trim(), ref:payRef,
+                  day:dayLabel(sel.dayIdx), start:hourLabel(sel.start), end:hourLabel(sel.end), hours:hours, price:priceFor(hours) };
+    payBtn.setAttribute('aria-disabled','true'); payBtn.innerHTML='Sending\u2026';
+    StudioOne.Booking.create(payload).then(function(){ renderPending(payload); });
+  });
+
+  /* ════ boot: one fetch feeds the picker and the day-arc ════ */
+  function boot(){
+    StudioOne.Availability.fetch().then(function(data){
+      window.BOOKINGS = BOOKINGS = data||{};
+      build();
+      buildDays();
+      if(typeof buildArc==='function'){ try{ buildArc(); }catch(err){ /* arc is decorative; never block the booking UI */ } }
+      chooseDay(0);   /* land on today — one less click for the common case */
+    });
+  }
+  boot();
+})();
+</script>
+
+</body>
+</html>
