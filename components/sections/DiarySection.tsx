@@ -3,8 +3,19 @@ import { getSiteData } from "@/lib/site-data";
 import { rich } from "@/lib/richtext";
 
 export default async function DiarySection() {
-  const { content } = await getSiteData();
+  const { content, settings, bacs, rateTiers } = await getSiteData();
   const { diary } = content;
+
+  const config = {
+    openHour: settings.openHour,
+    closeHour: settings.closeHour,
+    minHours: settings.minHours,
+    maxHours: settings.maxHours,
+    resetHours: settings.resetHours,
+    daysAhead: settings.daysAhead,
+    prices: Object.fromEntries(rateTiers.map((t) => [t.hours, t.price])),
+    bacs,
+  };
 
   return (
     <section className="book chapter" id="book" aria-labelledby="book-title">
@@ -19,7 +30,7 @@ export default async function DiarySection() {
           </div>
         </div>
 
-        <BookingDiary />
+        <BookingDiary config={config} />
       </div>
     </section>
   );
