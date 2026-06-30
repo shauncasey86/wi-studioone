@@ -120,8 +120,14 @@ curl -o /dev/null -w '%{http_code}' localhost:3000/   # → 200
    owner's Railway account, so the project/Postgres were not created from here.
    The repo is deploy-ready (Nixpacks + `railway.json` + README steps);
    connection to Postgres is proven locally. **Owner: create the Railway service
-   + Postgres plugin, set variables, and confirm the first deploy + `/api/health`
-   are green on Railway.** This is the only outstanding piece of the Phase 0 gate.
+   + Postgres plugin, set variables, and confirm the deploy + `/api/health` are
+   green on Railway.** This is the only outstanding piece of the Phase 0 gate.
+   - Deploy notes from the first attempts: Railway must build a branch that has
+     the app (the merged `main`, not the pre-scaffold `main`). Node is pinned to
+     22 via `.nvmrc` + `package.json` `engines` because Nixpacks otherwise
+     defaults to Node 18, which is too old for Next.js 16 (needs >=20.9.0). The
+     start command runs `prisma migrate deploy`, so `DATABASE_URL` (Postgres
+     plugin) MUST be set or the deploy fails at migrate/health-check.
 2. **Admin session lib:** CLAUDE.md says pick `iron-session` or Auth.js and
    justify. Default plan: `iron-session` (simplest for a single owner; no OAuth
    providers needed). Confirm or override in Phase 3.
