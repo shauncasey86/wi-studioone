@@ -6,6 +6,7 @@ import {
   deleteListItem,
   moveListItem,
 } from "@/lib/admin/actions";
+import { resetList } from "@/lib/admin/reset";
 import RichField from "@/components/admin/RichField";
 
 export const dynamic = "force-dynamic";
@@ -114,11 +115,18 @@ export default async function ListsPage() {
                 </div>
               </div>
             ))}
-            <form action={addListItem.bind(null, key)}>
-              <button className="btn ghost" type="submit">
-                + Add item
-              </button>
-            </form>
+            <div className="ops">
+              <form action={addListItem.bind(null, key)}>
+                <button className="btn ghost" type="submit">
+                  + Add item
+                </button>
+              </form>
+              <form action={resetList.bind(null, key)}>
+                <button className="btn ghost" type="submit">
+                  Reset list to defaults
+                </button>
+              </form>
+            </div>
           </section>
         );
       })}
