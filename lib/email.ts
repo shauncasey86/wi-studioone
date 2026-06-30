@@ -21,6 +21,7 @@ async function send(opts: {
   to: string[];
   subject: string;
   html: string;
+  replyTo?: string;
 }): Promise<void> {
   const key = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM || "hello@studioone.room";
@@ -38,6 +39,7 @@ async function send(opts: {
     to: opts.to,
     subject: opts.subject,
     html: opts.html,
+    ...(opts.replyTo ? { replyTo: opts.replyTo } : {}),
   });
 }
 
@@ -79,5 +81,41 @@ export async function sendStudioAlert(b: {
     to: recipients,
     subject: `New booking ${b.reference} — ${b.day} ${b.start}–${b.end}`,
     html,
+  });
+}
+
+/**
+ * Guest door-code email, sent when the studio confirms payment (Phase 5). Carries
+ * the confirmed slot, the current door code, the address + access notes, and a
+ * reply-to support line. Sent only to the guest — never to a public surface.
+ */
+export async function sendDoorCode(o: {
+  to: string;
+  name: string;
+  day: string;
+  start: string;
+  end: string;
+  doorCode: string;
+  doorCodeNote?: string | null;
+  address: string;
+  replyTo?: string;
+}): Promise<void> {
+  const html = `
+    <h2>You're booked — here's your door code</h2>
+    <p>Hi ${escapeHtml(o.name)}, your booking is confirmed.</p>
+    <p><strong>When:</strong> ${escapeHtml(o.day)} · ${escapeHtml(o.start)}–${escapeHtml(o.end)}</p>
+    <p style="font-size:1.4rem;letter-spacing:.1em;">
+      <strong>Door code: ${escapeHtml(o.doorCode)}</strong>
+    </p>
+    ${o.doorCodeNote ? `<p>${escapeHtml(o.doorCodeNote)}</p>` : ""}
+    <p><strong>Where:</strong> ${escapeHtml(o.address)}</p>
+    <p>Self-access, start to finish — the room is left ready for you. Just reply
+    to this email if you need anything.</p>
+  `;
+  await send({
+    to: [o.to],
+    subject: `Your StudioONE door code — ${o.day} ${o.start}–${o.end}`,
+    html,
+    replyTo: o.replyTo,
   });
 }

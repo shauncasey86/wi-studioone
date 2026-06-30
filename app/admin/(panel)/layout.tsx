@@ -20,6 +20,9 @@ export default async function PanelLayout({
         <span className="tag">admin</span>
         <nav>
           <Link href="/admin">Dashboard</Link>
+          <Link href="/admin/bookings">Bookings</Link>
+          <Link href="/admin/blocks">Blocks</Link>
+          <Link href="/admin/holds">Holds</Link>
           <Link href="/admin/content">Content</Link>
           <Link href="/admin/lists">Lists</Link>
           <Link href="/admin/pricing">Pricing &amp; rules</Link>
