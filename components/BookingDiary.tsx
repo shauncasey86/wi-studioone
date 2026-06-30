@@ -150,7 +150,6 @@ export default function BookingDiary({ config }: { config: DiaryConfig }) {
     const stepPay = $("step-pay"),
       nameInput = $("bk-name") as HTMLInputElement | null,
       emailInput = $("bk-email") as HTMLInputElement | null,
-      bacsRef = $("bacs-ref"),
       bacsAmt = $("bacs-amt"),
       payBtn = $("pay-confirm");
 
@@ -660,7 +659,6 @@ export default function BookingDiary({ config }: { config: DiaryConfig }) {
 
     const openPay = () => {
       if (sel.start === null) return;
-      if (bacsRef) bacsRef.textContent = "Assigned when you reserve";
       if (bacsAmt) bacsAmt.textContent = money(priceFor(sel.end! - sel.start));
       if (stepPay) (stepPay as HTMLElement).hidden = false;
       if (confirmBtn) (confirmBtn as HTMLElement).hidden = true;
@@ -986,22 +984,6 @@ export default function BookingDiary({ config }: { config: DiaryConfig }) {
                         <span className="demo">Demo details</span>
                       ) : null}
                     </div>
-                    <div className="bacs-row">
-                      <dt>Account name</dt>
-                      <dd>{config.bacs.accountName}</dd>
-                    </div>
-                    <div className="bacs-row">
-                      <dt>Sort code</dt>
-                      <dd>{config.bacs.sortCode}</dd>
-                    </div>
-                    <div className="bacs-row">
-                      <dt>Account no.</dt>
-                      <dd>{config.bacs.accountNo}</dd>
-                    </div>
-                    <div className="bacs-row ref">
-                      <dt>Reference</dt>
-                      <dd id="bacs-ref">—</dd>
-                    </div>
                     <div className="bacs-row amt">
                       <dt>Amount</dt>
                       <dd id="bacs-amt">—</dd>
@@ -1009,7 +991,7 @@ export default function BookingDiary({ config }: { config: DiaryConfig }) {
                   </dl>
                   <p className="pay-note">
                     Enter your name and email, then press reserve to hold the
-                    slot. Your <strong>reference</strong> and these bank details
+                    slot. Your <strong>reference</strong> and the bank details
                     appear on the next screen — transfer the{" "}
                     <strong>exact amount</strong> with that reference, and the
                     door code is emailed once it clears.
