@@ -7,8 +7,28 @@
 // (see lib/richtext). A non-breaking space is written as  .
 
 import { PrismaClient, Prisma } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
+
+// Seed/refresh the single owner from ADMIN_EMAIL/ADMIN_PASSWORD (CLAUDE.md §15).
+// The password is read at seed-time only and stored as a bcrypt hash. Skips when
+// the env vars are absent. Safe to run on every deploy.
+async function seedAdmin() {
+  const email = process.env.ADMIN_EMAIL?.toLowerCase().trim();
+  const password = process.env.ADMIN_PASSWORD;
+  if (!email || !password) {
+    console.log("[seed] ADMIN_EMAIL/ADMIN_PASSWORD not set — skipping admin.");
+    return;
+  }
+  const passwordHash = await bcrypt.hash(password, 12);
+  await prisma.adminUser.upsert({
+    where: { email },
+    create: { email, passwordHash },
+    update: { passwordHash },
+  });
+  console.log(`[seed] Admin user ensured: ${email}`);
+}
 
 const NB = " ";
 
@@ -285,6 +305,8 @@ const rateTiers = [
 ];
 
 async function main() {
+  await seedAdmin();
+
   // Seed-if-empty: safe to run on every deploy. If content already exists we
   // skip, so production admin edits (Phase 3) are never clobbered. Pass
   // SEED_FORCE=1 (or --force) to overwrite — used in dev to reset to baseline.
