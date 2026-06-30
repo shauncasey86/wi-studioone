@@ -36,15 +36,15 @@ npm test                    # vitest
 
 ## Scripts
 
-| Script                   | Purpose                                          |
-| ------------------------ | ------------------------------------------------ |
-| `npm run dev`            | Dev server                                       |
-| `npm run build`          | `prisma generate` + `next build`                 |
-| `npm run start`          | Production server                                |
-| `npm run lint` / `format`| ESLint / Prettier                                |
-| `npm run prisma:migrate` | Create/apply a dev migration                     |
-| `npm run db:seed`        | Seed (idempotent; `SEED_FORCE=1` to reset)       |
-| `npm test`               | Vitest unit + integration tests                  |
+| Script                    | Purpose                                    |
+| ------------------------- | ------------------------------------------ |
+| `npm run dev`             | Dev server                                 |
+| `npm run build`           | `prisma generate` + `next build`           |
+| `npm run start`           | Production server                          |
+| `npm run lint` / `format` | ESLint / Prettier                          |
+| `npm run prisma:migrate`  | Create/apply a dev migration               |
+| `npm run db:seed`         | Seed (idempotent; `SEED_FORCE=1` to reset) |
+| `npm test`                | Vitest unit + integration tests            |
 
 ## Admin
 

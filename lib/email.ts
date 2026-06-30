@@ -24,7 +24,10 @@ async function send(opts: {
   replyTo?: string;
 }): Promise<void> {
   const key = process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM || "hello@studioone.room";
+  // Default to Resend's shared test sender so an unset EMAIL_FROM still works in
+  // testing (onboarding@resend.dev needs no verified domain). Set EMAIL_FROM to
+  // your own verified sender for production.
+  const from = process.env.EMAIL_FROM || "onboarding@resend.dev";
   if (!key) {
     console.log(
       `[email] (no RESEND_API_KEY) would send "${opts.subject}" to`,
@@ -32,15 +35,32 @@ async function send(opts: {
     );
     return;
   }
-  if (!opts.to.length) return;
+  if (!opts.to.length) {
+    console.warn(`[email] "${opts.subject}" has no recipients — not sent.`);
+    return;
+  }
   const resend = new Resend(key);
-  await resend.emails.send({
+  // Resend returns { error } rather than throwing on API rejections (e.g. an
+  // unverified from-address, or test-mode "can only send to your own address").
+  // Surface it in the logs so misconfiguration is debuggable.
+  const { data, error } = await resend.emails.send({
     from,
     to: opts.to,
     subject: opts.subject,
     html: opts.html,
     ...(opts.replyTo ? { replyTo: opts.replyTo } : {}),
   });
+  if (error) {
+    console.error(
+      `[email] Resend rejected "${opts.subject}" (from ${from} → ${opts.to.join(", ")}):`,
+      error,
+    );
+  } else {
+    console.log(
+      `[email] sent "${opts.subject}" → ${opts.to.join(", ")}`,
+      data?.id,
+    );
+  }
 }
 
 /**
