@@ -1,9 +1,9 @@
-// StudioONE — Prisma schema.
+// StudioONE — Prisma schema (Phase 2: full content model, CLAUDE.md §5).
 //
-// Phase 0 (scaffold) intentionally ships only the minimal model needed to prove
-// the app connects to Postgres and that migrations run. The full data model
-// (SiteSettings, the reorderable list tables, Booking, etc. — see CLAUDE.md §5)
-// lands in Phase 2 (Content model + seed).
+// A typed singleton JSON document (SiteSettings.content) holds all scalar copy,
+// validated by a zod schema on read/write (lib/content.ts). Reorderable lists
+// get their own tables with an `order` column. Booking/Block/RecurringHold/
+// AdminUser tables land now; their behaviour is wired in Phases 4–5.
 
 generator client {
   provider = "prisma-client-js"
@@ -14,10 +14,153 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-/// Placeholder model so `prisma migrate` has something to create and the
-/// /api/health route can verify a real round-trip to the database.
-/// Replaced/expanded by the real schema in Phase 2.
-model HealthCheck {
-  id        Int      @id @default(autoincrement())
-  checkedAt DateTime @default(now())
+// Scalar copy + all settings, one row, `content` shape validated by zod.
+model SiteSettings {
+  id            Int      @id @default(1)
+  content       Json // hero, manifesto, room statement, chapter labels, CTA, footer, meta…
+  // operational settings:
+  openHour      Int      @default(7)
+  closeHour     Int      @default(22)
+  minHours      Int      @default(1)
+  maxHours      Int      @default(8)
+  resetHours    Int      @default(1)
+  daysAhead     Int      @default(28)
+  pendingTtlHrs Int      @default(48)
+  bacs          Json // accountName, sortCode, accountNo, referencePrefix, demoFlag
+  doorCode      String // current active code
+  doorCodeNote  String?
+  studioEmails  String[] // booking-alert recipients
+  fromEmail     String   @default("hello@studioone.room")
+  contact       Json // email, phone, "replies within the hour"
+  map           Json // lat, lng, zoom, tagLabel, coordsText, openMapsUrl, embedSrc
+  updatedAt     DateTime @updatedAt
+}
+
+// Reorderable lists — each row has `order`; admin can add/remove/drag.
+model Kind {
+  id      String @id @default(cuid())
+  order   Int
+  kicker  String
+  line    String
+  timeTag String
+}
+
+model HowStep {
+  id      String @id @default(cuid())
+  order   Int
+  label   String
+  heading String
+  body    String
+}
+
+model Policy {
+  id     String @id @default(cuid())
+  order  Int
+  kicker String
+  body   String
+}
+
+model RoomFact {
+  id     String @id @default(cuid())
+  order  Int
+  strong String
+  text   String
+}
+
+model ChangeoverItem {
+  id    String @id @default(cuid())
+  order Int
+  text  String
+}
+
+model NavItem {
+  id     String  @id @default(cuid())
+  order  Int
+  label  String
+  anchor String
+  cur    String? // cursor label (data-cur), e.g. "Read"
+}
+
+model FooterColumn {
+  id    String @id @default(cuid())
+  order Int
+  title String
+  links Json // [{ label, href }]
+}
+
+model HeroEyebrow {
+  id    String @id @default(cuid())
+  order Int
+  text  String
+}
+
+model ManifestoFoot {
+  id    String @id @default(cuid())
+  order Int
+  term  String
+  def   String
+}
+
+// Drives the diary + the rates strip.
+model RateTier {
+  id    String @id @default(cuid())
+  hours Int    @unique
+  price Int
+}
+
+model MediaAsset {
+  id        String   @id @default(cuid())
+  key       String
+  url       String
+  alt       String?
+  createdAt DateTime @default(now())
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  EXPIRED
+}
+
+model Booking {
+  id          String        @id @default(cuid())
+  name        String
+  email       String
+  date        DateTime // the booked day (date-only, London)
+  startHour   Int // e.g. 14 (24h, London)
+  endHour     Int // exclusive end, e.g. 16
+  hours       Int
+  pricePence  Int
+  reference   String        @unique
+  status      BookingStatus @default(PENDING)
+  createdAt   DateTime      @default(now())
+  confirmedAt DateTime?
+  cancelledAt DateTime?
+  codeSentAt  DateTime?
+
+  @@index([date, status])
+}
+
+model Block {
+  id        String   @id @default(cuid())
+  date      DateTime
+  startHour Int
+  endHour   Int
+  label     String?
+}
+
+model RecurringHold {
+  id        String  @id @default(cuid())
+  weekday   Int // 0=Mon … 6=Sun
+  startHour Int
+  endHour   Int
+  label     String?
+}
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
 }
