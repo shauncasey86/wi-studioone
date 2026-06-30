@@ -10,16 +10,16 @@
 ## Status
 
 - **Stages complete:** Phase 0 (Scaffold), Phase 1 (Static port), Phase 2
-  (Content model + seed).
-- **Stage just finished:** Phase 2.
-- **Stage next:** Phase 3 — Admin + CMS.
+  (Content model + seed), Phase 3 (Admin + CMS).
+- **Stage just finished:** Phase 3.
+- **Stage next:** Phase 4 — Bookings backend.
 
 ### Full stage plan (from CLAUDE.md §14)
 
 - [x] **Phase 0 — Scaffold & repo**
 - [x] **Phase 1 — Port the static site**
 - [x] **Phase 2 — Content model + seed**
-- [ ] **Phase 3 — Admin + CMS**
+- [x] **Phase 3 — Admin + CMS**
 - [ ] **Phase 4 — Bookings backend**
 - [ ] **Phase 5 — Booking management + door code**
 - [ ] **Phase 6 — Harden + ship**
@@ -31,127 +31,137 @@
 ### Local
 
 ```bash
-npm install                       # postinstall runs `prisma generate`
-cp .env.example .env              # set DATABASE_URL
-npm run prisma:migrate            # apply migrations (init + content_model)
-npm run db:seed                   # load today's copy into the DB (idempotent)
-npm run dev                       # http://localhost:3000
+npm install
+cp .env.example .env     # set DATABASE_URL, SESSION_SECRET (>=32 chars),
+                         # ADMIN_EMAIL, ADMIN_PASSWORD
+npm run prisma:migrate
+npm run db:seed          # seeds content (if empty) + the admin user from env
+npm run dev              # site at /, admin at /admin
 ```
 
-The site now renders **from the database** — without a seeded `SiteSettings`
-row the page errors (it `findUniqueOrThrow`s), so `db:seed` is required before
-the site renders. `GET /api/health` returns `{"status":"ok","database":"connected"}`.
+Admin: sign in at `/admin` with `ADMIN_EMAIL` / `ADMIN_PASSWORD`. Uploaded
+images go to `UPLOAD_DIR` (default `./uploads`, git-ignored) and are served by
+`/api/media/...`.
 
 ### Deploy (Railway) — LIVE ✅
 
-Service `wi-studioone` + Postgres are live; Railway builds **`main`** with
-Nixpacks. **Merge this branch into `main`** to ship. The release command runs
-`prisma migrate deploy && npm run db:seed && npm run start`. The seed is
-**seed-if-empty**: it populates an empty DB on first deploy but skips when
-content already exists (so it never clobbers admin edits — Phase 3). To reset a
-deployed DB to baseline on purpose, run the seed with `SEED_FORCE=1`. Deploy
-essentials from earlier phases still apply (Node pinned to 22 via `.nvmrc` +
-engines; `DATABASE_URL` must reference the Postgres plugin).
+Merge the working branch into **`main`**; Railway builds with Nixpacks and the
+release runs `prisma migrate deploy && npm run db:seed && npm run start`. The
+seed is **seed-if-empty** for content (never clobbers admin edits;
+`SEED_FORCE=1` to reset) and **upserts the admin user** from `ADMIN_EMAIL`/
+`ADMIN_PASSWORD` every release.
+
+**Set these Railway service variables for Phase 3:**
+
+- `SESSION_SECRET` — `openssl rand -base64 32` (admin cookie signing; required).
+- `ADMIN_EMAIL`, `ADMIN_PASSWORD` — the owner login (password is hashed at seed
+  time; you can remove `ADMIN_PASSWORD` after first deploy — the hash persists).
+- `UPLOAD_DIR` — point at a **mounted Railway volume** (e.g. `/data/uploads`) so
+  uploaded images survive deploys. Without a volume, uploads are ephemeral.
+
+Earlier essentials still apply (Node 22 via `.nvmrc`+engines; `DATABASE_URL`
+must reference the Postgres plugin).
 
 ### ⚠️ Environment note (Prisma engines behind a proxy)
 
-`prisma generate`/`migrate` download native engines from `binaries.prisma.sh`.
-On Railway/normal networks this just works; in the restricted sandbox the
-download resets (`ECONNRESET`). Fetch them once with
-`curl --cacert /root/.ccr/ca-bundle.crt` (engine hash from
+`prisma generate`/`migrate` download native engines from `binaries.prisma.sh`;
+fine on Railway, reset-prone in the sandbox. Workaround: fetch engines with
+`curl --cacert /root/.ccr/ca-bundle.crt` (hash from
 `node_modules/@prisma/engines-version/package.json`, target
-`debian-openssl-3.0.x`) and point Prisma at them via `PRISMA_QUERY_ENGINE_LIBRARY`
-/ `PRISMA_SCHEMA_ENGINE_BINARY` + `NODE_EXTRA_CA_CERTS`. Also set `DATABASE_URL`
-for `next build` (a local Postgres is fine). Sandbox-only — never commit these.
+`debian-openssl-3.0.x`) and set `PRISMA_QUERY_ENGINE_LIBRARY` /
+`PRISMA_SCHEMA_ENGINE_BINARY` + `NODE_EXTRA_CA_CERTS`. Set `DATABASE_URL` for
+`next build`. `.env` (git-ignored) already wires the local values.
 
 ---
 
-## Last stage — Phase 2 (what was built)
+## Last stage — Phase 3 (what was built)
 
-The public site is now rendered from Postgres; the Phase-1 hardcoded copy lives
-in the database.
+A password-protected admin CMS at `/admin` where every §6 section is editable
+and changes show live.
 
-- **`prisma/schema.prisma`** — the full §5 model replaces the `HealthCheck`
-  placeholder: `SiteSettings` (JSON `content` + operational settings + `bacs`/
-  `contact`/`map` JSON + door code/emails), the reorderable list tables (`Kind`,
-  `HowStep`, `Policy`, `RoomFact`, `ChangeoverItem`, `NavItem`, `FooterColumn`,
-  `HeroEyebrow`, `ManifestoFoot`, `RateTier`, `MediaAsset`), and
-  `Booking`/`Block`/`RecurringHold`/`AdminUser` (tables only; behaviour in
-  Phases 4–5). Migration: `prisma/migrations/20260630112755_content_model/`.
-  (`NavItem` has an extra `cur` field for the cursor label — §5 is a sketch.)
-- **`lib/content.ts`** — zod schemas (§6) for the `content` JSON + `bacs`/
-  `contact`/`map`, `.strict()` (rejects unknown fields), with inferred TS types.
-- **`lib/richtext.tsx`** — the safe rich-text renderer for the `*italic*` /
-  `**bold**` convention, plus `[label](href)` links (needed by the rates note).
-  Escaping is by construction (React escapes string children); link hrefs are
-  scheme-checked.
-- **`lib/site-data.ts`** — `getSiteData()` (React `cache()`d): one round-trip
-  for the settings singleton (JSON columns zod-validated) + every list, ordered.
-- **`components/sections/*`** — each section is now an async server component
-  reading `getSiteData()` and rendering rich fields via `rich()`: `Topbar`,
-  `Hero`, `Manifesto`, `Days`, `RoomStatement`, `How`, `DiarySection`,
-  `Practical`, `CtaStrip`, `Footer`. `app/page.tsx` composes them and is
-  `force-dynamic` (renders from the DB at request, not at build).
-- **`app/layout.tsx`** — `generateMetadata`/`generateViewport` now read
-  `content.meta` from the DB (with a static fallback so `next build` is safe
-  without a DB). Fonts unchanged.
-- **`prisma/seed.ts`** — idempotent seed loading today's exact copy (re-running
-  replaces the content singleton + all list rows; never touches bookings).
-- `<BookingDiary/>` is unchanged (still client + mock service); Phase 4 wires it
-  to the real API. Its BACS panel is still hardcoded — it reads
-  `SiteSettings.bacs` once the booking API exists.
+- **Auth** — single owner via `iron-session` (signed, HTTP-only, same-site
+  cookie). `lib/session-config.ts` (edge-safe options) + `lib/session.ts`
+  (`getSession`/`requireAdmin`). `lib/auth.ts` does bcrypt verify + an in-memory
+  login rate limiter (generic errors). `middleware.ts` redirects unauthenticated
+  `/admin/*` to `/admin/login`; `requireAdmin()` is called in every admin page +
+  every mutation (the real boundary). Admin user seeded from env (bcrypt).
+- **Editors** (`app/admin/(panel)/*`, gated layout + nav):
+  - **Content** (`/admin/content`) — every scalar field in §6, driven by
+    `lib/admin/content-fields.ts`; rich fields use a live-preview textarea
+    (`components/admin/RichField.tsx`), OG image via upload
+    (`components/admin/ImageField.tsx`). Saves through the zod content schema.
+  - **Lists** (`/admin/lists`) — generic add / edit / delete / reorder (↑/↓) for
+    all repeatable tables (`lib/admin/lists-config.ts`), incl. footer-column
+    links as `label | href` lines.
+  - **Pricing & rules** (`/admin/pricing`) — the 8 rate tiers + operational
+    settings (open/close, min/max, reset, days-ahead, pending TTL).
+  - **Settings** (`/admin/settings`) — BACS, door code + note, alert recipients,
+    from-email, contact, map pin.
+- **Server actions** (`lib/admin/actions.ts`, all `requireAdmin()`-gated): login,
+  logout, saveContent, saveSettings, savePricing, list CRUD, uploadMedia. Every
+  mutation `revalidatePath("/")` so the public site updates immediately.
+- **Image storage** (`lib/storage.ts` + `app/api/media/[...key]/route.ts`) — a
+  filesystem/volume backend (the CLAUDE.md §3 fallback), no external creds, with
+  path-traversal guards and a `MediaAsset` row per upload. R2 is the recommended
+  production backend and slots in behind the same `save()` interface.
+
+New deps: `iron-session`, `bcryptjs` (+ `@types/bcryptjs`).
 
 ---
 
-## Verify (Phase 2 gate) — ✅ PASSED
+## Verify (Phase 3 gate) — ✅ PASSED
 
-`npm run lint`, `npm run format:check`, `npm run build` all pass (build with
-`DATABASE_URL` set, as on Railway). Against a local seeded Postgres:
+`npm run lint`, `npm run format:check`, `npm run build` all pass. Driven with
+the headless browser against a local seeded DB:
 
-- **Renders identically from the DB** — a full-page screenshot at 1440px matches
-  the Phase-1 render exactly (same 1440×7504 layout, palette, type, diary).
-- **HTML spot-checks** confirm faithful markup: hero `the <em>hour.</em>`, the
-  manifesto word spans incl. `<span class="w"><em>sit ten for dinner.</em></span>`,
-  `Bare. Daylit. <em>Looked after.</em>`, policy `<strong>24 hours</strong>`,
-  room-fact spacing (`<b>~40 m²</b> ground floor` with a real nbsp vs
-  `<b>Kettle</b>, fridge, sink` with none), rate tiers `<li>1h <b>£45</b></li>`,
-  the rates-note `[Message the studio](mailto:…)` link, nav `data-cur`, and the
-  `Open · 07:00–22:00` status line.
-- **Seed is idempotent** (counts stable on re-run) and **/api/health** is green.
+- **Auth gate:** `GET /admin` → 307 redirect to `/admin/login`. Login with the
+  seeded owner → `/admin`.
+- **Content edit is live:** changed `hero.sub` in `/admin/content`, saved → the
+  new text appears on `/` immediately.
+- **Pricing edit is live:** set 1-hour rate to £99 → `/` rates strip shows
+  `1h <b>£99</b>`.
+- **List CRUD is live:** added + filled a hero-eyebrow item → it appears on `/`.
+  (Reorder uses ↑/↓ move actions; delete + add covered by the same generic CRUD.)
+- **Image upload works:** uploaded a PNG in the OG-image field → stored, URL set,
+  and served by `/api/media/...` (200, `image/png`).
 
-To re-verify: `prisma:migrate`, `db:seed`, `build`, `start`, open the site.
+To re-verify: `db:seed`, `start`, sign in at `/admin`, edit any section, refresh
+`/`. (Local test edits were reset with `SEED_FORCE=1 npm run db:seed`.)
 
 ---
 
 ## Open questions (need owner decision/action)
 
-1. **Admin session lib (Phase 3):** plan is `iron-session` (simplest single
-   owner; no OAuth). Confirm or override.
-2. **Image storage (Phase 3):** Cloudflare R2 vs Railway volume (CLAUDE.md §3).
-3. **OG image:** still the legacy Unsplash URL (in `content.meta.ogImage`);
-   replace with a real StudioONE image (editable in Phase 3).
-4. **Door-code model:** single rotating code is the decided scope (CLAUDE.md §2).
+1. **Image storage backend:** the filesystem/volume backend is active and works.
+   For production durability, either mount a Railway volume at `UPLOAD_DIR` or
+   provide R2 creds (then wire the R2 backend behind `lib/storage`). Decide
+   before launch (CLAUDE.md §3).
+2. **OG image:** still the legacy Unsplash URL in `content.meta.ogImage` —
+   replace via `/admin/content` with a real StudioONE image.
+3. **Door-code model:** single rotating code is the decided scope (CLAUDE.md §2).
 
 ---
 
 ## Next stage — verbatim (copy-paste as the next session's brief)
 
-**Phase 3 — Admin + CMS.** Auth, content editors for every section incl.
-add/remove/reorder, image upload, map pin, pricing/rules.
+**Phase 4 — Bookings backend.** Server-side availability (§8), POST
+`/api/bookings`, BACS pending flow, Resend studio alert; wire `<BookingDiary/>`
+to the real API.
 
-**Gate:** every section in §6 is editable and changes show live.
+**Gate:** a real booking creates a PENDING row, emails the studio, and prevents
+double-booking (test proven).
 
-Detail (CLAUDE.md §10): build `/admin`, gated by middleware. Login page →
-bcrypt-check against the single `AdminUser` → signed HTTP-only same-site session
-cookie (iron-session unless overridden); logout; rate-limit login. Seed the
-`AdminUser` from `ADMIN_EMAIL`/`ADMIN_PASSWORD` (bcrypt hash; password used at
-seed-time only). A content editor with a form per §6 section: scalar fields write
-through the zod `content` schema; the list tables support add / remove /
-drag-to-reorder (persist `order`); rich fields use the `*italic*`/`**bold**`
-convention with a live preview; image upload (OG/favicon/section images) to the
-object store → `MediaAsset`. Map-pin editor (lat/lng/zoom/tag/coords/openMapsUrl
-→ the OSM embed). Pricing & rules editor (RateTier prices + operational
-settings). Saving must revalidate the public route so changes show live
-(the page is `force-dynamic`, so a fresh request already reflects DB writes;
-still call `revalidatePath('/')` where caching is added). Validate every input
-with zod; gate every admin route + mutation; CSRF + same-site cookies.
+Detail (CLAUDE.md §8/§9): compute availability **server-side in Europe/London**
+from CONFIRMED + PENDING (until `pendingTtlHrs`) bookings, one-off `Block`s, and
+`RecurringHold`s projected onto each date, applying the `resetHours` buffer each
+side, `minHours`/`maxHours`, whole hours, past-hour exclusion, and the
+`daysAhead` window — using the operational settings + `RateTier`s already in the
+DB. `GET /api/availability` returns `{ [isoDate]: { [hour]: "free"|"booked"|
+"buffer"|"past" } }`. `POST /api/bookings` (zod-validated, rate-limited +
+honeypot) re-checks availability inside a DB transaction, creates a PENDING
+booking with a `{referencePrefix}-XXXXXX` reference, returns BACS details +
+reference + amount, and emails the studio via Resend (door code never included).
+Add a lazy/`pendingTtlHrs` expiry that frees slots. Then replace the mock bodies
+in `lib/availability.ts` (`fetchAvailability`/`createBooking`) with calls to the
+real endpoints — `<BookingDiary/>` itself shouldn't need to change. Unit-test the
+availability rules + the double-booking transaction race (Vitest, §13).
