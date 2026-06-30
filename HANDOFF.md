@@ -42,19 +42,14 @@ The site now renders **from the database** — without a seeded `SiteSettings`
 row the page errors (it `findUniqueOrThrow`s), so `db:seed` is required before
 the site renders. `GET /api/health` returns `{"status":"ok","database":"connected"}`.
 
-### Deploy (Railway) — LIVE ✅ (needs a one-time seed for Phase 2)
+### Deploy (Railway) — LIVE ✅
 
 Service `wi-studioone` + Postgres are live; Railway builds **`main`** with
 Nixpacks. **Merge this branch into `main`** to ship. The release command runs
-`prisma migrate deploy` (applies the new `content_model` migration) but **does
-NOT seed** — seeding every release would clobber admin edits once Phase 3 lands.
-So after the Phase 2 deploy, **run the seed once** against the Railway DB, e.g.:
-
-```bash
-railway run npm run db:seed         # or a Railway one-off command / shell
-```
-
-Until that runs, the deployed page will 500 (health stays green). Deploy
+`prisma migrate deploy && npm run db:seed && npm run start`. The seed is
+**seed-if-empty**: it populates an empty DB on first deploy but skips when
+content already exists (so it never clobbers admin edits — Phase 3). To reset a
+deployed DB to baseline on purpose, run the seed with `SEED_FORCE=1`. Deploy
 essentials from earlier phases still apply (Node pinned to 22 via `.nvmrc` +
 engines; `DATABASE_URL` must reference the Postgres plugin).
 
@@ -130,14 +125,12 @@ To re-verify: `prisma:migrate`, `db:seed`, `build`, `start`, open the site.
 
 ## Open questions (need owner decision/action)
 
-1. **Railway one-time seed (Phase 2):** after merging, run `npm run db:seed`
-   once against the Railway DB (see Run & deploy). The release does not auto-seed.
-2. **Admin session lib (Phase 3):** plan is `iron-session` (simplest single
+1. **Admin session lib (Phase 3):** plan is `iron-session` (simplest single
    owner; no OAuth). Confirm or override.
-3. **Image storage (Phase 3):** Cloudflare R2 vs Railway volume (CLAUDE.md §3).
-4. **OG image:** still the legacy Unsplash URL (in `content.meta.ogImage`);
+2. **Image storage (Phase 3):** Cloudflare R2 vs Railway volume (CLAUDE.md §3).
+3. **OG image:** still the legacy Unsplash URL (in `content.meta.ogImage`);
    replace with a real StudioONE image (editable in Phase 3).
-5. **Door-code model:** single rotating code is the decided scope (CLAUDE.md §2).
+4. **Door-code model:** single rotating code is the decided scope (CLAUDE.md §2).
 
 ---
 

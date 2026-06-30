@@ -285,6 +285,19 @@ const rateTiers = [
 ];
 
 async function main() {
+  // Seed-if-empty: safe to run on every deploy. If content already exists we
+  // skip, so production admin edits (Phase 3) are never clobbered. Pass
+  // SEED_FORCE=1 (or --force) to overwrite — used in dev to reset to baseline.
+  const force =
+    process.env.SEED_FORCE === "1" || process.argv.includes("--force");
+  const existing = await prisma.siteSettings.findUnique({ where: { id: 1 } });
+  if (existing && !force) {
+    console.log(
+      "[seed] SiteSettings already present — skipping (set SEED_FORCE=1 to overwrite).",
+    );
+    return;
+  }
+
   await prisma.$transaction([
     prisma.siteSettings.upsert({
       where: { id: 1 },
