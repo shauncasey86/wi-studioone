@@ -100,12 +100,16 @@ and changes show live.
 - **Server actions** (`lib/admin/actions.ts`, all `requireAdmin()`-gated): login,
   logout, saveContent, saveSettings, savePricing, list CRUD, uploadMedia. Every
   mutation `revalidatePath("/")` so the public site updates immediately.
-- **Image storage** (`lib/storage.ts` + `app/api/media/[...key]/route.ts`) — a
-  filesystem/volume backend (the CLAUDE.md §3 fallback), no external creds, with
-  path-traversal guards and a `MediaAsset` row per upload. R2 is the recommended
-  production backend and slots in behind the same `save()` interface.
+- **Image storage** (`lib/storage.ts` + `app/api/media/[...key]/route.ts`) —
+  **Cloudflare R2** when the `R2_*` env vars are set (uploads to the bucket,
+  serves from `R2_PUBLIC_URL`), else a filesystem/volume fallback served by
+  `/api/media`. Path-traversal guards; a `MediaAsset` row per upload.
+- **Admin styling** — the admin uses the site's own design tokens (Fraunces,
+  Space Mono, umber/oat/marigold): umber top bar with the StudioONE mark, the
+  hero-style umber login, chapter-label section headers, serif inputs, marigold
+  buttons — so it matches the public frontend.
 
-New deps: `iron-session`, `bcryptjs` (+ `@types/bcryptjs`).
+New deps: `iron-session`, `bcryptjs` (+ `@types/bcryptjs`), `@aws-sdk/client-s3`.
 
 ---
 
@@ -132,10 +136,11 @@ To re-verify: `db:seed`, `start`, sign in at `/admin`, edit any section, refresh
 
 ## Open questions (need owner decision/action)
 
-1. **Image storage backend:** the filesystem/volume backend is active and works.
-   For production durability, either mount a Railway volume at `UPLOAD_DIR` or
-   provide R2 creds (then wire the R2 backend behind `lib/storage`). Decide
-   before launch (CLAUDE.md §3).
+1. **Image storage:** R2 is the chosen backend and is implemented — it activates
+   automatically once the five `R2_*` env vars are set on Railway (`R2_ACCOUNT_ID`,
+   `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_PUBLIC_URL`).
+   Until then the filesystem/volume fallback is used. **Owner action:** create
+   the R2 bucket + API token + public URL and set those vars.
 2. **OG image:** still the legacy Unsplash URL in `content.meta.ogImage` —
    replace via `/admin/content` with a real StudioONE image.
 3. **Door-code model:** single rotating code is the decided scope (CLAUDE.md §2).

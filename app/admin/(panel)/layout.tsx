@@ -14,7 +14,10 @@ export default async function PanelLayout({
   return (
     <div className="admin">
       <header className="admin-bar">
-        <span className="brand">StudioONE admin</span>
+        <span className="brand">
+          Studio<span className="hr">ONE</span>
+        </span>
+        <span className="tag">admin</span>
         <nav>
           <Link href="/admin">Dashboard</Link>
           <Link href="/admin/content">Content</Link>
