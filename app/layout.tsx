@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Fraunces, Space_Mono } from "next/font/google";
 import "./globals.css";
+import { getSiteData } from "@/lib/site-data";
 
 // Fraunces — variable, with optical sizing + the SOFT/WONK axes the design uses,
 // plus italics for the marigold <em> accents. Space Mono for all the micro-labels.
@@ -27,52 +28,68 @@ const APPLE_ICON =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' fill='%23221a13'/%3E%3Ccircle cx='90' cy='90' r='26' fill='%23d98324'/%3E%3C/svg%3E";
 const MASK_ICON =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='5' fill='black'/%3E%3C/svg%3E";
-const OG_IMAGE =
-  "https://images.unsplash.com/photo-1722604819704-78b6d9c26ea9?auto=format&fit=crop&w=1200&h=630&q=80";
 
-export const metadata: Metadata = {
-  metadataBase: new URL("https://studioone.room"),
-  title: "StudioONE — one studio in Hull, booked by the hour. Sutton Village.",
-  description:
-    "StudioONE — a bare, daylit studio in Sutton Village, Hull. £45 the first hour, less for each after, one-hour minimum. Pay by bank transfer; your door code arrives by email once it clears. For shoots, classes, dinners, workshops and quiet days.",
-  alternates: { canonical: "https://studioone.room/" },
-  openGraph: {
-    type: "website",
-    siteName: "StudioONE",
-    locale: "en_GB",
-    url: "https://studioone.room/",
-    title: "StudioONE — a room in Hull, kept by the hour",
-    description:
-      "A bare, daylit room in Sutton Village, Hull. £45 the first hour, less for each after, one-hour minimum. Pay by transfer; the door code lands by email once it clears.",
-    images: [
-      {
-        url: OG_IMAGE,
-        width: 1200,
-        height: 630,
-        alt: "The room — empty, daylit, oak floor, lime-plaster walls.",
-      },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "StudioONE — a room in Hull, kept by the hour",
-    description:
-      "A bare, daylit room in Sutton Village, Hull. £45 the first hour, less for each after, one-hour minimum. Code by email once payment clears.",
-    images: [OG_IMAGE],
-  },
-  icons: {
-    icon: FAVICON,
-    apple: APPLE_ICON,
-    other: [{ rel: "mask-icon", url: MASK_ICON, color: "#d98324" }],
-  },
+const FALLBACK_META: Metadata = {
+  title: "StudioONE",
+  description: "One studio in Hull, booked by the hour. Sutton Village.",
 };
 
-export const viewport: Viewport = {
-  width: "device-width",
-  initialScale: 1,
-  viewportFit: "cover",
-  themeColor: "#221a13",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  let meta;
+  try {
+    meta = (await getSiteData()).content.meta;
+  } catch {
+    return FALLBACK_META; // e.g. no DB at build time
+  }
+  return {
+    metadataBase: new URL("https://studioone.room"),
+    title: meta.title,
+    description: meta.description,
+    alternates: { canonical: meta.canonical },
+    openGraph: {
+      type: "website",
+      siteName: "StudioONE",
+      locale: "en_GB",
+      url: meta.canonical,
+      title: meta.ogTitle,
+      description: meta.ogDescription,
+      images: [
+        {
+          url: meta.ogImage,
+          width: 1200,
+          height: 630,
+          alt: meta.ogImageAlt,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: meta.twitterTitle,
+      description: meta.twitterDescription,
+      images: [meta.ogImage],
+    },
+    icons: {
+      icon: FAVICON,
+      apple: APPLE_ICON,
+      other: [{ rel: "mask-icon", url: MASK_ICON, color: "#d98324" }],
+    },
+  };
+}
+
+export async function generateViewport(): Promise<Viewport> {
+  let themeColor = "#221a13";
+  try {
+    themeColor = (await getSiteData()).content.meta.themeColor;
+  } catch {
+    /* fall back to the umber default */
+  }
+  return {
+    width: "device-width",
+    initialScale: 1,
+    viewportFit: "cover",
+    themeColor,
+  };
+}
 
 export default function RootLayout({
   children,
