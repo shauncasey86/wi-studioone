@@ -1,28 +1,28 @@
 # HANDOFF
 
 > The single source of truth for picking up this project. Always reflects HEAD.
-> Read this **and** `git log --oneline -20` before doing anything. Then do
-> exactly **one** stage, pass its gate, rewrite this file, commit, tag
-> `stage-N-complete`, push, and stop. Full plan + non-negotiables: `CLAUDE.md`.
+> All six build phases are complete. What remains is owner configuration on
+> Railway (variables, merge, optional custom domain) and ongoing changes. Full
+> plan + non-negotiables: `CLAUDE.md`.
 
 ---
 
 ## Status
 
-- **Stages complete:** Phase 0–5 (Scaffold, Static port, Content model, Admin
-  CMS, Bookings backend, Booking management + door code).
-- **Stage just finished:** Phase 5.
-- **Stage next:** Phase 6 — Harden + ship.
+- **Stages complete:** Phase 0–6 — **build complete.**
+- **Stage just finished:** Phase 6 (Harden + ship).
+- **Stage next:** none — project build done. Remaining items are owner config
+  (see "Go-live checklist") and any future change requests.
 
 ### Full stage plan (from CLAUDE.md §14)
 
-- [x] **Phase 0 — Scaffold & repo**
-- [x] **Phase 1 — Port the static site**
-- [x] **Phase 2 — Content model + seed**
-- [x] **Phase 3 — Admin + CMS**
-- [x] **Phase 4 — Bookings backend**
-- [x] **Phase 5 — Booking management + door code**
-- [ ] **Phase 6 — Harden + ship**
+- [x] Phase 0 — Scaffold & repo
+- [x] Phase 1 — Port the static site
+- [x] Phase 2 — Content model + seed
+- [x] Phase 3 — Admin + CMS
+- [x] Phase 4 — Bookings backend
+- [x] Phase 5 — Booking management + door code
+- [x] Phase 6 — Harden + ship
 
 ---
 
@@ -32,107 +32,84 @@
 
 ```bash
 npm install
-cp .env.example .env       # DATABASE_URL, SESSION_SECRET, ADMIN_EMAIL/PASSWORD
+cp .env.example .env      # DATABASE_URL, SESSION_SECRET, ADMIN_EMAIL/PASSWORD
 npm run prisma:migrate
 npm run db:seed
-npm run dev                # site /, admin /admin
-npm test                   # vitest: availability rules + double-booking race
+npm run dev               # site / · admin /admin
+npm test                  # 16 tests
 ```
 
-### Deploy (Railway) — LIVE ✅
+### Railway
 
 Merge the working branch to **`main`**; release runs
-`prisma migrate deploy && npm run db:seed && npm run start`. Variables:
-`DATABASE_URL`, `SESSION_SECRET`, `ADMIN_EMAIL`/`ADMIN_PASSWORD`, `UPLOAD_DIR`
-(volume) **or** the five `R2_*` vars, and for live email
-`RESEND_API_KEY` / `EMAIL_FROM` / `STUDIO_ALERT_EMAILS`. Without a Resend key the
-booking + confirm flows still work and emails are logged. Sandbox Prisma engine
-note unchanged (fetch engines via curl, set `PRISMA_QUERY_ENGINE_LIBRARY` etc.).
+`prisma migrate deploy && npm run db:seed && npm run start`. Sandbox Prisma
+engine note unchanged (curl the engines + set `PRISMA_QUERY_ENGINE_LIBRARY` /
+`NODE_EXTRA_CA_CERTS` / `DATABASE_URL` for build/test/seed). Full variable list
+and deploy steps are in `README.md`.
 
 ---
 
-## Last stage — Phase 5 (what was built)
+## Last stage — Phase 6 (what was built)
 
-The full booking lifecycle + availability controls, in the admin.
-
-- **`lib/email.ts` → `sendDoorCode`** — guest email on confirm: greeting,
-  confirmed slot, the current door code (prominent), address + access notes
-  (`doorCodeNote`), reply-to the studio contact. All input escaped. `send()` now
-  supports `replyTo`.
-- **`lib/admin/booking-actions.ts`** (all `requireAdmin`-gated):
-  - `confirmBooking` — PENDING → CONFIRMED, sets `confirmedAt`/`codeSentAt`,
-    emails the door code (address pulled from the editable footer "Address"
-    column), revalidates `/`.
-  - `cancelBooking` — → CANCELLED, sets `cancelledAt`, frees the slot.
-  - `resendDoorCode` — re-sends to a CONFIRMED booking.
-  - `createBlock`/`deleteBlock` (one-off) and `createHold`/`deleteHold` (weekly).
-- **`/admin/bookings`** — list + status filter (with counts), per-booking
-  Confirm / Resend code / Cancel, and a four-week availability overview grid.
-- **`/admin/blocks`** — add/list/delete one-off blocks.
-- **`/admin/holds`** — add/list/delete weekly recurring holds.
-- Nav updated; `<select>`/`date` inputs styled. Door code, note and alert
-  recipients remain editable in `/admin/settings` (Phase 3).
-
-Blocks & holds already feed availability via `lib/booking/service`
-(`occupantsForWindow` + the create transaction), so they subtract immediately.
+- **Testing mode** (`lib/admin/testmode.ts`, dashboard toggle) — `enterTestMode`
+  snapshots SiteSettings (content + JSON + operational fields) and every list /
+  block / hold and stamps `testStartedAt`; `exitTestMode` restores that snapshot
+  and deletes bookings created during the window. A banner shows on the public
+  site (`TestModeBanner`) and in the admin bar while on. Emails still send so you
+  can verify them. New `SiteSettings` fields `testMode` / `testStartedAt` /
+  `testSnapshot` (migration `test_mode`). Admin user + uploaded files are not
+  touched by the reset.
+- **Security headers + CSP** (`next.config.ts`) — CSP (self scripts/styles, OSM
+  iframe, https/data images, self fonts), `X-Content-Type-Options`,
+  `Referrer-Policy`, `X-Frame-Options`, `Permissions-Policy`, HSTS. The public
+  site renders with **0 CSP violations**.
+- **Tests** — added `test/time.test.ts` (London BST/GMT conversion, DST-safe
+  date keys, weekday projection). Suite is 16 tests across availability rules,
+  the double-booking race, and time.
+- **Docs** — `README.md` rewritten to cover admin, booking flow, testing mode,
+  Railway vars, R2, and the swappable/borrowed Resend account.
+- **Adaptations for your setup:** no custom domain yet → `NEXT_PUBLIC_SITE_URL`
+  uses the Railway URL (swap later). Resend is env-driven and swappable; the
+  BACS "Demo details" flag is settings-driven (no dead placeholder path).
 
 ---
 
-## Verify (Phase 5 gate) — ✅ PASSED
+## Verify (Phase 6 gate / Definition of Done) — ✅ PASSED
 
-`npm run lint`, `npm run format:check`, `npm run build`, `npm test` (13) all pass.
-End-to-end against the live server + DB:
+`npm run lint`, `npm run format:check`, `npm run build`, `npm test` (16) all pass.
 
-- **Confirm:** a PENDING booking → **CONFIRMED** (`confirmedAt`/`codeSentAt`
-  set) and the **door-code email** was dispatched to the guest (logged without a
-  key), with the confirmed slot — never to the studio alert.
-- **Cancel:** the confirmed booking → **CANCELLED** (`cancelledAt` set) and its
-  slot **disappeared from `/api/availability`** (freed).
-- **Recurring hold:** adding a Wednesday 14:00–16:00 hold made that slot
-  **occupied on every Wednesday** in the window (projection works). Blocks use
-  the same occupant path.
-
-(Test bookings/holds/blocks were cleared afterwards.)
+- **Testing mode e2e:** ON → public banner; a content edit and a booking went
+  live; OFF → banner gone, content reverted to baseline, the test booking
+  deleted (count 0).
+- **Security headers** present on responses; **CSP: 0 violations** and the site
+  renders fully (fonts, day-arc, map allowance).
+- DoD §17 met end-to-end across phases: DB-rendered site, full CMS, real bookings
+  with London availability + double-booking prevention, admin lifecycle + door
+  code, blocks/holds subtracting availability, tests + security pass. **Custom
+  domain is the one deferred item** (no domain yet — Railway URL in use).
 
 ---
 
-## Open questions / known limitations
+## Go-live checklist (owner config on Railway)
 
-1. **R2 / Resend:** set the `R2_*` and `RESEND_*` vars on Railway to switch image
-   storage to R2 and enable live email (both implemented; logged/fallback until
-   then).
-2. **Diary timezone:** the guest's picked date uses their browser's local day;
-   the server validates it as London. Fine for UK users (revisit in Phase 6 if a
-   non-UK edge case matters).
-3. **Refund flag:** cancel currently just frees the slot; an explicit
-   "refund noted" flag (CLAUDE.md §9, no money moves) is not yet stored — add in
-   Phase 6 if wanted (small `Booking` field + checkbox).
-4. **Security headers / CSP**, full §12 pass, README deploy/DNS docs, and removing
-   the BACS "demo" flag path are Phase 6.
+1. **Merge** `claude/working-method-handoff-athjdr` → `main` (Phases 3–6 are
+   stacked on the branch).
+2. **Variables:** `SESSION_SECRET`, `ADMIN_EMAIL`/`ADMIN_PASSWORD`,
+   `NEXT_PUBLIC_SITE_URL` (Railway URL), `TZ=Europe/London`; `RESEND_API_KEY` +
+   `EMAIL_FROM` (verified sender on that Resend account) + `STUDIO_ALERT_EMAILS`;
+   the five `R2_*` vars (or a volume at `UPLOAD_DIR`).
+3. **In the admin:** set the real BACS details + uncheck "Demo details", set the
+   door code, set studio alert recipients, replace the OG image.
+4. **Optional later:** add a custom domain (Railway Networking + DNS CNAME) and
+   point `NEXT_PUBLIC_SITE_URL` + Resend's verified domain at it.
 
----
+## Known limitations / future polish
 
-## Next stage — verbatim (copy-paste as the next session's brief)
-
-**Phase 6 — Harden + ship.** Security pass (§12), tests (§13), README +
-deploy/DNS docs, remove the BACS "demo" flag path, final Railway deploy on the
-custom domain with Resend DNS verified.
-
-**Gate:** Definition of Done (§17).
-
-Detail: security (CLAUDE.md §12) — confirm every `/admin` route + mutation is
-gated (middleware + `requireAdmin`), zod on every external input (booking form +
-admin forms + settings; reject unknown fields), login rate-limit + generic
-errors (done — review), rate-limit + honeypot on `POST /api/bookings` (done —
-review), escape all user strings in HTML/email (the rich parser escapes by
-construction; email helpers escape — audit), HTTP-only/secure/same-site session
-cookie (done), and add sensible **security headers / CSP** (now feasible since
-GSAP/Lenis are bundled — set in `next.config.ts` headers() or middleware; allow
-the OSM iframe + Google Fonts + R2 image origin). Tests (§13) — extend Vitest
-coverage (BST/GMT boundary for past-hour, recurring-hold projection edge) and
-consider a Playwright e2e for the booking + admin-confirm path. README — local
-setup, `.env.example` (current), seed command, Railway deploy + custom-domain +
-Resend DNS steps (mostly present — refresh for Phases 3–5). Remove the BACS
-"demo details" path once real details are entered (the flag already hides via
-settings; drop the dead placeholder). Then the final Railway deploy on the
-custom domain with Resend DNS verified → Definition of Done (§17).
+- CSP uses `'unsafe-inline'` for scripts/styles (Next hydration + next/font);
+  a nonce-based policy is a future hardening.
+- Diary uses the guest's browser-local calendar day (validated as London
+  server-side) — fine for UK; a non-UK browser could be off by one at midnight.
+- Testing-mode reset restores content/lists/blocks/holds and deletes test
+  bookings, but leaves uploaded image files in storage (orphaned, harmless).
+- An explicit "refund noted" flag on cancel isn't stored (cancel just frees the
+  slot) — add a small field if the owner wants it.

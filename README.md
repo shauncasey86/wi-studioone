@@ -4,98 +4,113 @@ One studio in Hull, booked by the hour — a Next.js port of `legacy/studioone.h
 with a password-protected admin CMS and a manual BACS bank-transfer booking flow,
 deployed to Railway with managed Postgres.
 
-This repository is built in numbered phases. See **`HANDOFF.md`** for current
-status and the next phase to pick up. The full plan and non-negotiables live in
-**`CLAUDE.md`**. The visual + behavioural source of truth is
-**`legacy/studioone.html`** — port it, do not redesign it.
+The visual + behavioural source of truth is **`legacy/studioone.html`** — the
+public site is a faithful port of it, now rendered from the database. `CLAUDE.md`
+holds the full plan; `HANDOFF.md` always reflects the current state.
 
 ## Tech stack
 
-- **Next.js** (App Router, TypeScript) + React 19
-- **Postgres** (Railway managed) + **Prisma** (schema + migrations)
-- **ESLint + Prettier** (no CSS-in-JS, no utility framework — hand-written CSS)
-- Resend (email), iron-session (admin auth), zod (validation), GSAP + Lenis
-  (motion) — wired in later phases.
+- **Next.js 16** (App Router, TypeScript) + React 19 — hand-written CSS, no
+  utility framework
+- **Postgres** + **Prisma** (schema + migrations)
+- **iron-session** + bcrypt (single-owner admin), **zod** (validation)
+- **Resend** (transactional email), **Cloudflare R2** or a volume (images)
+- **GSAP + Lenis** bundled from npm; fonts via `next/font`
+- ESLint + Prettier; **Vitest** (availability rules + double-booking race)
 
 ## Local setup
 
-Requires Node 20+ and a Postgres database.
+Requires Node 20+ and Postgres.
 
 ```bash
-# 1. Install dependencies
 npm install
-
-# 2. Configure environment
-cp .env.example .env
-#    then edit .env — at minimum set DATABASE_URL to your local/remote Postgres.
-
-# 3. Generate the Prisma client and apply migrations
-npm run prisma:generate
-npm run prisma:migrate        # creates/updates your dev database
-
-# 4. Seed today's site copy into the database (real seed lands in Phase 2)
-npm run db:seed
-
-# 5. Run the dev server
-npm run dev                   # http://localhost:3000
+cp .env.example .env        # set DATABASE_URL, SESSION_SECRET (>=32 chars),
+                            # ADMIN_EMAIL, ADMIN_PASSWORD
+npm run prisma:migrate      # apply migrations
+npm run db:seed             # seed content (if empty) + the admin user
+npm run dev                 # site http://localhost:3000 · admin /admin
+npm test                    # vitest
 ```
 
-Verify the database connection at `http://localhost:3000/api/health` — it
-returns `{ "status": "ok", "database": "connected" }`.
+`GET /api/health` → `{"status":"ok","database":"connected"}`.
 
 ## Scripts
 
-| Script                   | Purpose                                           |
-| ------------------------ | ------------------------------------------------- |
-| `npm run dev`            | Start the dev server                              |
-| `npm run build`          | `prisma generate` + `next build`                  |
-| `npm run start`          | Start the production server                       |
-| `npm run lint`           | ESLint                                            |
-| `npm run format`         | Prettier write                                    |
-| `npm run format:check`   | Prettier check (CI-friendly)                      |
-| `npm run prisma:migrate` | Create/apply a dev migration                      |
-| `npm run prisma:deploy`  | Apply migrations in production (`migrate deploy`) |
-| `npm run db:seed`        | Seed the database                                 |
+| Script                   | Purpose                                          |
+| ------------------------ | ------------------------------------------------ |
+| `npm run dev`            | Dev server                                       |
+| `npm run build`          | `prisma generate` + `next build`                 |
+| `npm run start`          | Production server                                |
+| `npm run lint` / `format`| ESLint / Prettier                                |
+| `npm run prisma:migrate` | Create/apply a dev migration                     |
+| `npm run db:seed`        | Seed (idempotent; `SEED_FORCE=1` to reset)       |
+| `npm test`               | Vitest unit + integration tests                  |
+
+## Admin
+
+Sign in at **`/admin`** with `ADMIN_EMAIL` / `ADMIN_PASSWORD`. From there you can:
+
+- **Content / Lists / Pricing / Settings** — edit every section, add/remove/
+  reorder lists, set rate tiers + rules, BACS, door code, map, contact, emails.
+- **Bookings** — confirm a paid booking (emails the guest their door code),
+  cancel (frees the slot), resend the code; four-week overview.
+- **Blocks / Holds** — one-off blocks and weekly recurring holds; both subtract
+  from availability.
+- **Testing mode** (dashboard) — turn on to trial every feature end to end; a
+  banner shows on the public site. Turning it off **restores the content and
+  deletes any bookings made during the test** (snapshot-on-enter, restore-on-
+  exit). Emails still send while testing so you can verify them.
+
+## Booking flow (BACS)
+
+Guest picks day → start → length, enters name + email, and reserves. The server
+re-checks availability in a Serializable transaction, creates a PENDING booking
+with a `{prefix}-XXXXXX` reference, shows the BACS details + reference, and emails
+the studio (never the door code). The owner verifies the transfer and clicks
+**Confirm**, which emails the guest the current door code. All availability logic
+runs in Europe/London (timestamps stored UTC).
 
 ## Deploying to Railway
 
-The app deploys as **one Railway service** (the Next app) plus the **Postgres
-plugin**. Build uses Nixpacks; `railway.json` wires the release migration and a
-health check.
+One service (the Next app, Nixpacks) + the Postgres plugin. `railway.json` runs
+`prisma migrate deploy && npm run db:seed && npm run start` on release (the seed
+is seed-if-empty for content and upserts the admin user), and health-checks
+`/api/health`.
 
-1. **Create the project & database**
-   - In Railway, create a new project → **Deploy from GitHub repo** → select
-     this repo and the deploy branch.
-   - Add the **Postgres** plugin to the project. Railway exposes its connection
-     string as `DATABASE_URL`.
+**Service variables:**
 
-2. **Set service variables** (Railway → service → Variables) — mirror
-   `.env.example`:
-   - `DATABASE_URL` — reference the Postgres plugin's variable
-     (`${{Postgres.DATABASE_URL}}`).
-   - `SESSION_SECRET` — `openssl rand -base64 32`.
-   - `NEXT_PUBLIC_SITE_URL` — your public URL.
-   - `TZ=Europe/London`.
-   - Resend / R2 / admin variables are added in later phases.
+- `DATABASE_URL` = `${{Postgres.DATABASE_URL}}`
+- `SESSION_SECRET` = `openssl rand -base64 32`
+- `ADMIN_EMAIL`, `ADMIN_PASSWORD` (drop `ADMIN_PASSWORD` after first deploy; the
+  hash persists)
+- `NEXT_PUBLIC_SITE_URL` — your Railway URL for now (e.g.
+  `https://wi-studioone.up.railway.app`); swap for a custom domain when you add
+  one (Railway → Settings → Networking → add domain + the CNAME it gives you).
+- `TZ=Europe/London`
+- **Email:** `RESEND_API_KEY`, `EMAIL_FROM`, `STUDIO_ALERT_EMAILS`. All
+  swappable any time. `EMAIL_FROM` must be a verified sender on whichever Resend
+  account the key belongs to (borrowing a test account from another project is
+  fine — use that account's verified domain, or `onboarding@resend.dev` for quick
+  tests). Without a key, emails are logged, not sent.
+- **Images:** the five `R2_*` vars (Cloudflare R2 — recommended), **or** mount a
+  volume at `UPLOAD_DIR` for the filesystem fallback.
 
-3. **Build & start** — `railway.json` already sets:
-   - Builder: Nixpacks (runs `npm run build`).
-   - Start: `npx prisma migrate deploy && npm run start` — migrations run on
-     every release, then the server starts.
-   - Health check: `/api/health` (fails the deploy if Postgres is unreachable).
+### Resend domain (when you have a real sending domain)
 
-4. **Custom domain** — Railway → service → Settings → Networking → add
-   `studioone.room` (or chosen domain) and create the CNAME at your DNS host as
-   instructed by Railway. Set `NEXT_PUBLIC_SITE_URL` to match.
+Add the domain in Resend, add the SPF/DKIM/DMARC records it gives you to your DNS
+host, verify, then set `EMAIL_FROM` to an address on that domain.
 
-5. **Resend DNS** (email; configured in Phase 4) — add the Resend domain
-   (`studioone.room`), then add the SPF, DKIM, and DMARC records Resend
-   provides to your DNS host and verify. Set `RESEND_API_KEY`, `EMAIL_FROM`,
-   and `STUDIO_ALERT_EMAILS`.
+## Security
 
-## Notes for this environment
+zod-validated inputs (unknown fields rejected); every `/admin` route + mutation
+gated by middleware and `requireAdmin`; HTTP-only/secure/same-site session
+cookie; bcrypt + rate-limited login; rate-limit + honeypot on `POST /api/bookings`;
+door code never exposed publicly or in the studio alert; all user input escaped in
+HTML/email; security headers + CSP set in `next.config.ts`.
 
-Prisma downloads its native query/schema engines from `binaries.prisma.sh`
-during `prisma generate`. Behind the restrictive sandbox proxy in CI/agent
-environments this download can be reset; on Railway and normal networks it
-works without intervention.
+## Notes for the sandbox
+
+Prisma downloads native engines from `binaries.prisma.sh`; behind the agent proxy
+this can reset. Fetch them with `curl --cacert /root/.ccr/ca-bundle.crt` and set
+`PRISMA_QUERY_ENGINE_LIBRARY` + `NODE_EXTRA_CA_CERTS` + `DATABASE_URL` for
+build/test/seed. On Railway/normal networks it just works.
