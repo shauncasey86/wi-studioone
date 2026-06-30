@@ -1,0 +1,23 @@
+// StudioONE — Prisma schema.
+//
+// Phase 0 (scaffold) intentionally ships only the minimal model needed to prove
+// the app connects to Postgres and that migrations run. The full data model
+// (SiteSettings, the reorderable list tables, Booking, etc. — see CLAUDE.md §5)
+// lands in Phase 2 (Content model + seed).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Placeholder model so `prisma migrate` has something to create and the
+/// /api/health route can verify a real round-trip to the database.
+/// Replaced/expanded by the real schema in Phase 2.
+model HealthCheck {
+  id        Int      @id @default(autoincrement())
+  checkedAt DateTime @default(now())
+}
