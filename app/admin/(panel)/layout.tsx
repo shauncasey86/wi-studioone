@@ -2,6 +2,7 @@ import Link from "next/link";
 import "../admin.css";
 import { requireAdmin } from "@/lib/session";
 import { logout } from "@/lib/admin/actions";
+import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +12,10 @@ export default async function PanelLayout({
   children: React.ReactNode;
 }) {
   const session = await requireAdmin();
+  const settings = await prisma.siteSettings.findUnique({
+    where: { id: 1 },
+    select: { testMode: true },
+  });
   return (
     <div className="admin">
       <header className="admin-bar">
@@ -18,6 +23,14 @@ export default async function PanelLayout({
           Studio<span className="hr">ONE</span>
         </span>
         <span className="tag">admin</span>
+        {settings?.testMode && (
+          <span
+            className="tag"
+            style={{ color: "var(--marigold)", fontWeight: 700 }}
+          >
+            ● Testing mode
+          </span>
+        )}
         <nav>
           <Link href="/admin">Dashboard</Link>
           <Link href="/admin/bookings">Bookings</Link>

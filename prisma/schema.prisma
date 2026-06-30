@@ -33,6 +33,11 @@ model SiteSettings {
   fromEmail     String   @default("hello@studioone.room")
   contact       Json // email, phone, "replies within the hour"
   map           Json // lat, lng, zoom, tagLabel, coordsText, openMapsUrl, embedSrc
+  // Testing mode: snapshot current content/lists/blocks/holds on enter; on exit
+  // restore them and delete bookings created during the test window.
+  testMode      Boolean  @default(false)
+  testStartedAt DateTime?
+  testSnapshot  Json?
   updatedAt     DateTime @updatedAt
 }
 

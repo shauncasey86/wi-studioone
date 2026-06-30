@@ -9,16 +9,21 @@ import Practical from "@/components/sections/Practical";
 import CtaStrip from "@/components/sections/CtaStrip";
 import Footer from "@/components/sections/Footer";
 import SiteEffects from "@/components/SiteEffects";
+import TestModeBanner from "@/components/TestModeBanner";
+import { getSiteData } from "@/lib/site-data";
 
 // Rendered from the database at request time (content lives in Postgres now).
 export const dynamic = "force-dynamic";
 
-export default function Home() {
+export default async function Home() {
+  const { settings } = await getSiteData();
   return (
     <>
       {/* custom cursor — enhanced by SiteEffects on fine pointers */}
       <div className="cur" id="cur"></div>
       <div className="cur-ring" id="cur-ring"></div>
+
+      {settings.testMode && <TestModeBanner />}
 
       <Topbar />
 
