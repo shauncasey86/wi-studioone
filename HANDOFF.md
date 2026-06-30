@@ -98,9 +98,9 @@ Key files: `package.json` (scripts), `railway.json`, `prisma/schema.prisma`,
 
 ---
 
-## Verify (Phase 0 gate)
+## Verify (Phase 0 gate) — ✅ PASSED
 
-Proven on this machine (against a local Postgres):
+Locally (against a local Postgres):
 
 ```bash
 npm run lint           # ✓ passes
@@ -112,22 +112,25 @@ curl localhost:3000/api/health   # → {"status":"ok","database":"connected"}
 curl -o /dev/null -w '%{http_code}' localhost:3000/   # → 200
 ```
 
+On Railway: **deploy is green** at https://wi-studioone.up.railway.app — the
+Nixpacks build, `prisma migrate deploy` (initial migration applied), and the
+`/api/health` health check all pass, which confirms the app is live and
+connected to the managed Postgres. The Phase 0 gate is fully satisfied.
+
 ---
 
 ## Open questions (need owner decision/action)
 
-1. **Railway provisioning is an owner action.** This session cannot reach the
-   owner's Railway account, so the project/Postgres were not created from here.
-   The repo is deploy-ready (Nixpacks + `railway.json` + README steps);
-   connection to Postgres is proven locally. **Owner: create the Railway service
-   + Postgres plugin, set variables, and confirm the deploy + `/api/health` are
-   green on Railway.** This is the only outstanding piece of the Phase 0 gate.
-   - Deploy notes from the first attempts: Railway must build a branch that has
-     the app (the merged `main`, not the pre-scaffold `main`). Node is pinned to
-     22 via `.nvmrc` + `package.json` `engines` because Nixpacks otherwise
-     defaults to Node 18, which is too old for Next.js 16 (needs >=20.9.0). The
-     start command runs `prisma migrate deploy`, so `DATABASE_URL` (Postgres
-     plugin) MUST be set or the deploy fails at migrate/health-check.
+1. **Railway is live (resolved).** Service `wi-studioone` + Postgres plugin are
+   provisioned and the deploy is green. Deploy gotchas learned (keep in mind for
+   future deploys):
+   - Railway builds **`main`**, so each stage's branch must be merged to `main`
+     (PR #1 did this for Phase 0). Or repoint Railway at the working branch.
+   - Node is pinned to 22 via `.nvmrc` + `package.json` `engines`; without it
+     Nixpacks defaults to Node 18, too old for Next.js 16 (needs >=20.9.0).
+   - `DATABASE_URL` on the service MUST be a **reference** to the Postgres
+     plugin (`${{Postgres.DATABASE_URL}}`), not a hand-typed/example string —
+     the start command runs `prisma migrate deploy` and fails otherwise.
 2. **Admin session lib:** CLAUDE.md says pick `iron-session` or Auth.js and
    justify. Default plan: `iron-session` (simplest for a single owner; no OAuth
    providers needed). Confirm or override in Phase 3.
