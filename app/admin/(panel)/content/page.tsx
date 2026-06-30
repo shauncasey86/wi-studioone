@@ -1,5 +1,6 @@
 import { getSiteData } from "@/lib/site-data";
 import { saveContent } from "@/lib/admin/actions";
+import { resetContentSection } from "@/lib/admin/reset";
 import { CONTENT_GROUPS, getPath } from "@/lib/admin/content-fields";
 import RichField from "@/components/admin/RichField";
 import ImageField from "@/components/admin/ImageField";
@@ -53,6 +54,15 @@ export default async function ContentPage() {
                 </div>
               );
             })}
+            <div className="ops">
+              <button
+                className="ghost"
+                type="submit"
+                formAction={resetContentSection.bind(null, group.key)}
+              >
+                Reset this section to defaults
+              </button>
+            </div>
           </fieldset>
         ))}
         <button className="btn" type="submit">

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { enterTestMode, exitTestMode } from "@/lib/admin/testmode";
+import { resetEverything } from "@/lib/admin/reset";
 
 export const dynamic = "force-dynamic";
 
@@ -76,6 +77,21 @@ export default async function Dashboard() {
           contact, emails
         </li>
       </ul>
+
+      <h2>Reset to defaults</h2>
+      <p className="muted">
+        Restore the original copy. Each content section (on{" "}
+        <Link href="/admin/content">Content</Link>) and each list (on{" "}
+        <Link href="/admin/lists">Lists</Link>) has its own reset, or restore
+        everything at once below. This only changes site copy and lists — it
+        never touches bookings, pricing, BACS/contact/map settings, or uploaded
+        images.
+      </p>
+      <form action={resetEverything}>
+        <button className="ghost" type="submit">
+          Reset all content &amp; lists to defaults
+        </button>
+      </form>
     </>
   );
 }
