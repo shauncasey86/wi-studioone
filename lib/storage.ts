@@ -2,15 +2,17 @@ import "server-only";
 import { promises as fs } from "fs";
 import path from "path";
 import crypto from "crypto";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
 /**
- * Image storage (CLAUDE.md §3). This is the documented fallback backend: a
- * persistent-volume / filesystem store, served by app/api/media/[...key].
- * It needs no external credentials, so it works locally and on a Railway volume.
+ * Image storage (CLAUDE.md §3).
  *
- * The recommended production backend is Cloudflare R2 via @aws-sdk/client-s3;
- * it slots in behind this same { save } interface once R2_* env + creds exist
- * (return the R2 public URL instead of the local /api/media/ URL).
+ * Primary backend: Cloudflare R2 (S3-compatible) — used when the R2_* env vars
+ * are all set. Files are uploaded to the bucket and served from R2_PUBLIC_URL.
+ *
+ * Fallback backend: a filesystem/volume store at UPLOAD_DIR, served by
+ * app/api/media/[...key]. No credentials needed; on Railway point UPLOAD_DIR at
+ * a mounted volume so uploads survive deploys.
  */
 export const uploadDir = process.env.UPLOAD_DIR || "uploads";
 
@@ -28,6 +30,44 @@ export function isAllowedImage(contentType: string): boolean {
   return contentType in EXT;
 }
 
+type R2Config = {
+  accountId: string;
+  accessKeyId: string;
+  secretAccessKey: string;
+  bucket: string;
+  publicUrl: string;
+};
+
+function r2Config(): R2Config | null {
+  const {
+    R2_ACCOUNT_ID,
+    R2_ACCESS_KEY_ID,
+    R2_SECRET_ACCESS_KEY,
+    R2_BUCKET,
+    R2_PUBLIC_URL,
+  } = process.env;
+  if (
+    R2_ACCOUNT_ID &&
+    R2_ACCESS_KEY_ID &&
+    R2_SECRET_ACCESS_KEY &&
+    R2_BUCKET &&
+    R2_PUBLIC_URL
+  ) {
+    return {
+      accountId: R2_ACCOUNT_ID,
+      accessKeyId: R2_ACCESS_KEY_ID,
+      secretAccessKey: R2_SECRET_ACCESS_KEY,
+      bucket: R2_BUCKET,
+      publicUrl: R2_PUBLIC_URL.replace(/\/$/, ""),
+    };
+  }
+  return null;
+}
+
+export function activeBackend(): "r2" | "filesystem" {
+  return r2Config() ? "r2" : "filesystem";
+}
+
 export async function save(
   data: Buffer,
   contentType: string,
@@ -36,15 +76,40 @@ export async function save(
     throw new Error(`Unsupported image type: ${contentType}`);
   }
   const key = `${crypto.randomUUID()}.${EXT[contentType]}`;
+
+  const r2 = r2Config();
+  if (r2) {
+    const client = new S3Client({
+      region: "auto",
+      endpoint: `https://${r2.accountId}.r2.cloudflarestorage.com`,
+      credentials: {
+        accessKeyId: r2.accessKeyId,
+        secretAccessKey: r2.secretAccessKey,
+      },
+    });
+    await client.send(
+      new PutObjectCommand({
+        Bucket: r2.bucket,
+        Key: key,
+        Body: data,
+        ContentType: contentType,
+        CacheControl: "public, max-age=31536000, immutable",
+      }),
+    );
+    return { key, url: `${r2.publicUrl}/${key}` };
+  }
+
+  // filesystem / volume fallback
   await fs.mkdir(uploadDir, { recursive: true });
   await fs.writeFile(path.join(uploadDir, key), data);
   return { key, url: `/api/media/${key}` };
 }
 
+// Only the filesystem backend serves through the app; R2 is served by its own
+// public URL. Returns null for missing/invalid keys.
 export async function read(
   key: string,
 ): Promise<{ data: Buffer; contentType: string } | null> {
-  // Guard against path traversal — keys are flat filenames only.
   if (key.includes("/") || key.includes("..") || key.includes("\\"))
     return null;
   const ext = key.split(".").pop()?.toLowerCase();

@@ -7,10 +7,17 @@ import { login } from "@/lib/admin/actions";
 export default function LoginPage() {
   const [state, formAction, pending] = useActionState(login, {});
   return (
-    <div className="admin">
+    <div className="admin admin-login">
       <div className="login-wrap">
-        <h1>StudioONE admin</h1>
-        <p className="muted">Sign in to manage the site.</p>
+        <span className="brand">
+          Studio<span className="hr">ONE</span>
+        </span>
+        <h1 style={{ marginTop: "0.6rem" }}>
+          The <em>admin.</em>
+        </h1>
+        <p className="muted" style={{ marginTop: "0.4rem" }}>
+          Sign in to manage the site.
+        </p>
         <form action={formAction}>
           <label htmlFor="email">Email</label>
           <input
