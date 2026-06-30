@@ -150,6 +150,8 @@
 .admin input[type="email"],
 .admin input[type="password"],
 .admin input[type="number"],
+.admin input[type="date"],
+.admin select,
 .admin textarea {
   width: 100%;
   padding: 0.7rem 0.85rem;
