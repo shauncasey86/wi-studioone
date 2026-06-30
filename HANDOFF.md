@@ -9,10 +9,10 @@
 
 ## Status
 
-- **Stages complete:** Phase 0–4 (Scaffold, Static port, Content model, Admin
-  CMS, Bookings backend).
-- **Stage just finished:** Phase 4.
-- **Stage next:** Phase 5 — Booking management + door code.
+- **Stages complete:** Phase 0–5 (Scaffold, Static port, Content model, Admin
+  CMS, Bookings backend, Booking management + door code).
+- **Stage just finished:** Phase 5.
+- **Stage next:** Phase 6 — Harden + ship.
 
 ### Full stage plan (from CLAUDE.md §14)
 
@@ -21,7 +21,7 @@
 - [x] **Phase 2 — Content model + seed**
 - [x] **Phase 3 — Admin + CMS**
 - [x] **Phase 4 — Bookings backend**
-- [ ] **Phase 5 — Booking management + door code**
+- [x] **Phase 5 — Booking management + door code**
 - [ ] **Phase 6 — Harden + ship**
 
 ---
@@ -42,113 +42,97 @@ npm test                   # vitest: availability rules + double-booking race
 ### Deploy (Railway) — LIVE ✅
 
 Merge the working branch to **`main`**; release runs
-`prisma migrate deploy && npm run db:seed && npm run start`. Variables to set
-(beyond earlier phases' `DATABASE_URL`, `SESSION_SECRET`, `ADMIN_*`,
-`UPLOAD_DIR`):
-
-- **Email (studio alert):** `RESEND_API_KEY`, `EMAIL_FROM`,
-  `STUDIO_ALERT_EMAILS` (comma-separated). Without `RESEND_API_KEY` the booking
-  still works and the alert is logged instead of sent.
-- **R2 (images):** the five `R2_*` vars — activates R2 automatically.
-
-### ⚠️ Sandbox Prisma engine note
-
-Unchanged from prior phases: fetch engines via `curl --cacert` and set
-`PRISMA_QUERY_ENGINE_LIBRARY` + `NODE_EXTRA_CA_CERTS` + `DATABASE_URL` for
-build/test/seed in the sandbox. `.env` wires local values.
+`prisma migrate deploy && npm run db:seed && npm run start`. Variables:
+`DATABASE_URL`, `SESSION_SECRET`, `ADMIN_EMAIL`/`ADMIN_PASSWORD`, `UPLOAD_DIR`
+(volume) **or** the five `R2_*` vars, and for live email
+`RESEND_API_KEY` / `EMAIL_FROM` / `STUDIO_ALERT_EMAILS`. Without a Resend key the
+booking + confirm flows still work and emails are logged. Sandbox Prisma engine
+note unchanged (fetch engines via curl, set `PRISMA_QUERY_ENGINE_LIBRARY` etc.).
 
 ---
 
-## Last stage — Phase 4 (what was built)
+## Last stage — Phase 5 (what was built)
 
-The booking engine is now real and server-authoritative (CLAUDE.md §8/§9).
+The full booking lifecycle + availability controls, in the admin.
 
-- **`lib/booking/time.ts`** — Europe/London helpers (timestamps stored UTC;
-  dates as UTC-midnight calendar keys so DST never shifts a day; hours are
-  London clock ints; weekday Mon=0).
-- **`lib/booking/availability.ts`** — pure rules (no DB, unit-tested):
-  `computeDayStatus` (booked + `resetHours` buffer each side + past-hour greying)
-  and `slotIsFree` (whole hours, min/max, open hours, past, buffers).
-- **`lib/booking/service.ts`** — DB layer: `getBookingConfig` (operational
-  settings + tiers + BACS), `expirePending` (frees PENDINGs older than
-  `pendingTtlHrs`), `getAvailabilityWindow` (the diary-shaped window), and
-  `createPendingBooking` — re-checks the slot inside a **Serializable**
-  transaction, generates a server `{referencePrefix}-XXXXXX` reference, prices
-  from the tiers, and creates the PENDING row. Occupants = CONFIRMED +
-  active-PENDING bookings, one-off `Block`s, and `RecurringHold`s projected onto
-  each date.
-- **`app/api/availability` (GET)** — live window for the diary.
-- **`app/api/bookings` (POST)** — zod-validated, IP rate-limited, honeypot
-  (`company`), creates the PENDING booking and emails the studio. Returns
-  `{ reference, amountPence, bacs }`. 409 on a taken slot, 400 on bad input.
-- **`lib/email.ts`** — Resend studio alert (who/when/price/reference + admin
-  link; **never** the door code). Logs instead of sending when
-  `RESEND_API_KEY` is unset.
-- **Diary wired to the real API** — `lib/availability.ts` now calls the GET/POST
-  endpoints; `<BookingDiary/>` takes a `config` prop (open/close, min/max, reset,
-  days-ahead, tier prices, BACS) from `DiarySection`, so it's settings-driven and
-  shows the real BACS details + the server reference in the "Awaiting payment"
-  panel. The guest reserves (holds the slot), then transfers using the shown
-  reference; the door code is emailed on admin confirm (Phase 5).
+- **`lib/email.ts` → `sendDoorCode`** — guest email on confirm: greeting,
+  confirmed slot, the current door code (prominent), address + access notes
+  (`doorCodeNote`), reply-to the studio contact. All input escaped. `send()` now
+  supports `replyTo`.
+- **`lib/admin/booking-actions.ts`** (all `requireAdmin`-gated):
+  - `confirmBooking` — PENDING → CONFIRMED, sets `confirmedAt`/`codeSentAt`,
+    emails the door code (address pulled from the editable footer "Address"
+    column), revalidates `/`.
+  - `cancelBooking` — → CANCELLED, sets `cancelledAt`, frees the slot.
+  - `resendDoorCode` — re-sends to a CONFIRMED booking.
+  - `createBlock`/`deleteBlock` (one-off) and `createHold`/`deleteHold` (weekly).
+- **`/admin/bookings`** — list + status filter (with counts), per-booking
+  Confirm / Resend code / Cancel, and a four-week availability overview grid.
+- **`/admin/blocks`** — add/list/delete one-off blocks.
+- **`/admin/holds`** — add/list/delete weekly recurring holds.
+- Nav updated; `<select>`/`date` inputs styled. Door code, note and alert
+  recipients remain editable in `/admin/settings` (Phase 3).
 
-New deps: `resend`, `vitest` (dev).
+Blocks & holds already feed availability via `lib/booking/service`
+(`occupantsForWindow` + the create transaction), so they subtract immediately.
 
 ---
 
-## Verify (Phase 4 gate) — ✅ PASSED
+## Verify (Phase 5 gate) — ✅ PASSED
 
-`npm run lint`, `npm run format:check`, `npm run build`, and `npm test` all pass.
+`npm run lint`, `npm run format:check`, `npm run build`, `npm test` (13) all pass.
+End-to-end against the live server + DB:
 
-- **Unit (`test/availability.test.ts`)** — reset buffers both sides, min/max,
-  open-hours bounds, whole hours, past-hour exclusion, and hold/pending-as-
-  occupant.
-- **Race (`test/booking-race.test.ts`)** — two concurrent `createPendingBooking`
-  calls for the same slot → exactly one succeeds, one PENDING row; and an
-  overlapping/buffer slot is rejected while the next free slot is allowed.
-- **E2E** — booking through the diary created a real PENDING row
-  (`S1-…`, 07:00–08:00, £45), the studio alert was dispatched (logged without a
-  key), and `GET /api/availability` then showed the slot as occupied.
+- **Confirm:** a PENDING booking → **CONFIRMED** (`confirmedAt`/`codeSentAt`
+  set) and the **door-code email** was dispatched to the guest (logged without a
+  key), with the confirmed slot — never to the studio alert.
+- **Cancel:** the confirmed booking → **CANCELLED** (`cancelledAt` set) and its
+  slot **disappeared from `/api/availability`** (freed).
+- **Recurring hold:** adding a Wednesday 14:00–16:00 hold made that slot
+  **occupied on every Wednesday** in the window (projection works). Blocks use
+  the same occupant path.
 
-(Local test bookings were cleared afterwards.)
+(Test bookings/holds/blocks were cleared afterwards.)
 
 ---
 
 ## Open questions / known limitations
 
-1. **R2:** set the five `R2_*` vars to switch image storage to R2 (implemented).
-2. **Resend:** owner sets `RESEND_API_KEY` + verifies the `studioone.room`
-   domain (SPF/DKIM/DMARC) for live email; until then alerts are logged.
-3. **Diary timezone:** the calendar/date the guest picks uses their browser's
-   local day; the server validates it as a London date. Fine for UK users; a
-   non-UK browser could be off by one day at midnight (edge case — revisit in
-   Phase 6 if needed).
-4. **GET /api/availability** returns occupant intervals per day-offset (the
-   diary's shape; CLAUDE.md §8 allowed "per-day if cleaner"). The authoritative
-   free/buffer/past computation + double-booking guard live server-side in the
-   POST path and are unit-tested.
-5. **Door code** is emailed on admin **confirm** — built in Phase 5.
+1. **R2 / Resend:** set the `R2_*` and `RESEND_*` vars on Railway to switch image
+   storage to R2 and enable live email (both implemented; logged/fallback until
+   then).
+2. **Diary timezone:** the guest's picked date uses their browser's local day;
+   the server validates it as London. Fine for UK users (revisit in Phase 6 if a
+   non-UK edge case matters).
+3. **Refund flag:** cancel currently just frees the slot; an explicit
+   "refund noted" flag (CLAUDE.md §9, no money moves) is not yet stored — add in
+   Phase 6 if wanted (small `Booking` field + checkbox).
+4. **Security headers / CSP**, full §12 pass, README deploy/DNS docs, and removing
+   the BACS "demo" flag path are Phase 6.
 
 ---
 
 ## Next stage — verbatim (copy-paste as the next session's brief)
 
-**Phase 5 — Booking management + door code.** Admin confirm (→ door-code email),
-cancel, resend, blocks, recurring holds, settings (BACS/door code/recipients).
+**Phase 6 — Harden + ship.** Security pass (§12), tests (§13), README +
+deploy/DNS docs, remove the BACS "demo" flag path, final Railway deploy on the
+custom domain with Resend DNS verified.
 
-**Gate:** full lifecycle works; door code emailed on confirm; holds/blocks
-subtract availability.
+**Gate:** Definition of Done (§17).
 
-Detail (CLAUDE.md §9/§10): build `/admin/bookings` — list + filter by status,
-view a booking, **Confirm** (PENDING → CONFIRMED, set `confirmedAt`/`codeSentAt`,
-send the guest the door-code email: greeting + confirmed slot + the current
-`doorCode` + address/access notes + reply-to support — escape all input, never
-expose the code publicly or in the studio alert), **Cancel** (→ CANCELLED, frees
-the slot; optional "refund noted" flag), and **resend door-code**. Show a
-four-week availability overview. Build `/admin/blocks` (one-off `Block` CRUD) and
-`/admin/holds` (weekly `RecurringHold` CRUD) — both already subtract availability
-via `lib/booking/service` (occupantsForWindow + the transaction), so adding rows
-is the main work. Door code + note + alert recipients are already editable in
-`/admin/settings`. Add the guest door-code email template to `lib/email.ts`
-(`sendDoorCode`). Confirm/cancel must `revalidatePath('/')` so availability
-updates. e2e: confirm a booking → assert the door-code email is dispatched (mock
-Resend); cancel frees the slot.
+Detail: security (CLAUDE.md §12) — confirm every `/admin` route + mutation is
+gated (middleware + `requireAdmin`), zod on every external input (booking form +
+admin forms + settings; reject unknown fields), login rate-limit + generic
+errors (done — review), rate-limit + honeypot on `POST /api/bookings` (done —
+review), escape all user strings in HTML/email (the rich parser escapes by
+construction; email helpers escape — audit), HTTP-only/secure/same-site session
+cookie (done), and add sensible **security headers / CSP** (now feasible since
+GSAP/Lenis are bundled — set in `next.config.ts` headers() or middleware; allow
+the OSM iframe + Google Fonts + R2 image origin). Tests (§13) — extend Vitest
+coverage (BST/GMT boundary for past-hour, recurring-hold projection edge) and
+consider a Playwright e2e for the booking + admin-confirm path. README — local
+setup, `.env.example` (current), seed command, Railway deploy + custom-domain +
+Resend DNS steps (mostly present — refresh for Phases 3–5). Remove the BACS
+"demo details" path once real details are entered (the flag already hides via
+settings; drop the dead placeholder). Then the final Railway deploy on the
+custom domain with Resend DNS verified → Definition of Done (§17).
