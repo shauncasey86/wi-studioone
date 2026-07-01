@@ -17,9 +17,13 @@ import { getSunTimes } from "@/lib/suntimes";
 export default function SiteEffects({
   lat = 53.7773,
   lng = -0.3203,
+  openHour = 7,
+  closeHour = 22,
 }: {
   lat?: number;
   lng?: number;
+  openHour?: number;
+  closeHour?: number;
 }) {
   useEffect(() => {
     const reduce = window.matchMedia(
@@ -187,9 +191,9 @@ export default function SiteEffects({
       });
     }
 
-    /* ════ DAY-ARC — sundial of the open day (07:00 → 22:00) ════ */
-    const OPEN = 7,
-      CLOSE = 22,
+    /* ════ DAY-ARC — sundial of the open day (live opening hours) ════ */
+    const OPEN = openHour,
+      CLOSE = closeHour,
       SPAN = CLOSE - OPEN;
     const ARC = { cx: 440, cy: 470, r: 360 };
     const pol = (cx: number, cy: number, r: number, deg: number) => {
@@ -257,7 +261,11 @@ export default function SiteEffects({
         ln.setAttribute("class", "arc-tick" + (maj ? " maj" : ""));
         ticksG.appendChild(ln);
       }
-      [12, 17].forEach((h) => {
+      const midLabels = [
+        Math.round(OPEN + SPAN / 3),
+        Math.round(OPEN + (2 * SPAN) / 3),
+      ].filter((h, i, a) => h > OPEN && h < CLOSE && a.indexOf(h) === i);
+      midLabels.forEach((h) => {
         const p = pol(ARC.cx, ARC.cy, ARC.r + 40, timeToDeg(h));
         const tx = document.createElementNS(NS, "text");
         tx.setAttribute("x", p.x.toFixed(1));
@@ -373,8 +381,9 @@ export default function SiteEffects({
         lab.textContent = "Closed";
         if (cap)
           cap.textContent =
-            (nowF < OPEN ? "opens 07:00" : "closed for the day") +
-            (sunHint ? " · " + sunHint : "");
+            (nowF < OPEN
+              ? "opens " + String(OPEN).padStart(2, "0") + ":00"
+              : "closed for the day") + (sunHint ? " · " + sunHint : "");
         return;
       }
 
@@ -415,7 +424,7 @@ export default function SiteEffects({
       const d = new Date(),
         h = d.getHours(),
         m = String(d.getMinutes()).padStart(2, "0");
-      const open = h >= 7 && h < 22;
+      const open = h >= openHour && h < closeHour;
       const s = document.getElementById("status");
       if (s)
         s.textContent =
@@ -588,7 +597,7 @@ export default function SiteEffects({
       if (lenis) lenis.destroy();
       document.documentElement.classList.remove("cur-live");
     };
-  }, [lat, lng]);
+  }, [lat, lng, openHour, closeHour]);
 
   return null;
 }

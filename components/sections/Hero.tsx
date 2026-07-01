@@ -3,8 +3,11 @@ import { getSiteData } from "@/lib/site-data";
 import { rich } from "@/lib/richtext";
 
 export default async function Hero() {
-  const { content, heroEyebrows } = await getSiteData();
+  const { content, heroEyebrows, settings } = await getSiteData();
   const { hero } = content;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const openLabel = `${pad(settings.openHour)}:00`;
+  const closeLabel = `${pad(settings.closeHour)}:00`;
 
   return (
     <section className="hero" aria-labelledby="hero-title">
@@ -55,8 +58,8 @@ export default async function Hero() {
                 aria-labelledby="arc-title"
               >
                 <title id="arc-title">
-                  Today&apos;s open hours, 07:00 to 22:00, with the current time
-                  marked
+                  Today&apos;s open hours, {openLabel} to {closeLabel}, with the
+                  current time marked
                 </title>
                 <line
                   className="arc-base"
@@ -73,10 +76,10 @@ export default async function Hero() {
                 <path id="arc-elapsed" className="arc-elapsed"></path>
                 <g id="arc-sun"></g>
                 <text className="arc-lab" x="60" y="494" textAnchor="start">
-                  07:00
+                  {openLabel}
                 </text>
                 <text className="arc-lab" x="820" y="494" textAnchor="end">
-                  22:00
+                  {closeLabel}
                 </text>
               </svg>
               <span className="arc-cap" id="arc-cap">

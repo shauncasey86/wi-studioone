@@ -40,7 +40,12 @@ export default async function Home() {
 
       <Footer />
 
-      <SiteEffects lat={map.lat} lng={map.lng} />
+      <SiteEffects
+        lat={map.lat}
+        lng={map.lng}
+        openHour={settings.openHour}
+        closeHour={settings.closeHour}
+      />
     </>
   );
 }
