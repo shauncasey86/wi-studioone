@@ -32,6 +32,12 @@ export default function ImageField({
     if (fileRef.current) fileRef.current.value = "";
   }
 
+  function onRemove() {
+    setUrl("");
+    setStatus(null);
+    if (fileRef.current) fileRef.current.value = "";
+  }
+
   return (
     <div>
       <input
@@ -49,6 +55,11 @@ export default function ImageField({
           onChange={onFile}
           style={{ color: "var(--a-dim)", fontSize: 12 }}
         />
+        {url ? (
+          <button type="button" className="ghost" onClick={onRemove}>
+            Remove
+          </button>
+        ) : null}
         {status ? <span className="hint">{status}</span> : null}
       </div>
       {url ? (
