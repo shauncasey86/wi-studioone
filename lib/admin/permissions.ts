@@ -23,6 +23,7 @@ export type Capability =
 const SUBADMIN_CAPABILITIES: ReadonlySet<Capability> = new Set([
   "bookings",
   "hours",
+  "pricing",
 ]);
 
 export function can(role: Role | undefined, cap: Capability): boolean {

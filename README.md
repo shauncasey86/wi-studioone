@@ -62,8 +62,9 @@ ahead. From there you can:
 - **Content / Lists / Pricing / Settings** — edit every section, add/remove/
   reorder lists, set rate tiers, BACS, door code, map, contact, emails.
 - **Team** — add or remove **sub-admins**. A sub-admin can manage bookings,
-  blocks, holds and opening hours (everything to run the diary day to day) but
-  not content, pricing, settings, testing mode or the team. Roles are enforced
+  blocks, holds, opening hours and pricing (everything to run the diary day to
+  day) but not site content, settings, testing mode or the team. Roles are
+  enforced
   server-side on every page and mutation; the sidebar only shows what a role can
   reach. The owner (seeded from `ADMIN_EMAIL`) always has full access and can't
   be removed from the UI.

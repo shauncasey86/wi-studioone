@@ -43,7 +43,7 @@ export default async function TeamPage() {
             The <em>team.</em>
           </>
         }
-        lede="Sub-admins can manage bookings, blocks, holds and opening hours — everything to run the diary day to day — but not content, pricing, settings or the team itself."
+        lede="Sub-admins can manage bookings, blocks, holds, opening hours and pricing — everything to run the diary day to day — but not site content, settings, testing mode or the team itself."
       />
 
       <CreateSubAdminForm />
