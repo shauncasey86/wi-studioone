@@ -1,11 +1,12 @@
 import "server-only";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import type { Role } from "@/lib/admin/permissions";
 
 export async function verifyCredentials(
   email: string,
   password: string,
-): Promise<{ id: string; email: string } | null> {
+): Promise<{ id: string; email: string; role: Role } | null> {
   const user = await prisma.adminUser.findUnique({
     where: { email: email.toLowerCase().trim() },
   });
@@ -18,7 +19,7 @@ export async function verifyCredentials(
     return null;
   }
   const ok = await bcrypt.compare(password, user.passwordHash);
-  return ok ? { id: user.id, email: user.email } : null;
+  return ok ? { id: user.id, email: user.email, role: user.role } : null;
 }
 
 // Simple in-memory login rate limiter (single replica; resets on restart).

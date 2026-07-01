@@ -1,17 +1,25 @@
 import { getSiteData } from "@/lib/site-data";
 import { saveSettings } from "@/lib/admin/actions";
+import { requireCapability } from "@/lib/session";
+import PageHeader from "@/components/admin/PageHeader";
 
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
+  await requireCapability("settings");
   const { settings, bacs, contact, map } = await getSiteData();
 
   return (
     <>
-      <h1>Settings</h1>
-      <p className="muted">
-        Payment details, door code, map pin, contact and alert recipients.
-      </p>
+      <PageHeader
+        eyebrow="Configuration"
+        title={
+          <>
+            The <em>details.</em>
+          </>
+        }
+        lede="Payment details, door code, map pin, contact and alert recipients."
+      />
 
       <form action={saveSettings}>
         <fieldset>

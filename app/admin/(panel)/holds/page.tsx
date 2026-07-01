@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/prisma";
+import { requireCapability } from "@/lib/session";
 import { createHold, deleteHold } from "@/lib/admin/booking-actions";
+import PageHeader from "@/components/admin/PageHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -18,17 +20,22 @@ function hh(h: number) {
 }
 
 export default async function HoldsPage() {
+  await requireCapability("bookings");
   const holds = await prisma.recurringHold.findMany({
     orderBy: [{ weekday: "asc" }, { startHour: "asc" }],
   });
 
   return (
     <>
-      <h1>Recurring holds</h1>
-      <p className="muted">
-        Weekly repeating reservations (e.g. a Tuesday class). Holds subtract
-        from availability on every matching weekday.
-      </p>
+      <PageHeader
+        eyebrow="Operations"
+        title={
+          <>
+            Recurring <em>holds.</em>
+          </>
+        }
+        lede="Weekly repeating reservations — a Tuesday class, say. Holds subtract from availability on every matching weekday."
+      />
 
       <h2>Add a weekly hold</h2>
       <form action={createHold}>

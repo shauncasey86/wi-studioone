@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import { getSession, requireAdmin } from "@/lib/session";
+import { getSession, requireCapability } from "@/lib/session";
 import { verifyCredentials, rateLimit, clearRateLimit } from "@/lib/auth";
 import {
   contentSchema,
@@ -45,6 +45,7 @@ export async function login(
   const session = await getSession();
   session.userId = user.id;
   session.email = user.email;
+  session.role = user.role;
   await session.save();
   redirect("/admin");
 }
@@ -57,7 +58,7 @@ export async function logout() {
 
 // ── scalar content ──
 export async function saveContent(formData: FormData) {
-  await requireAdmin();
+  await requireCapability("content");
   const content: Record<string, unknown> = {};
   for (const f of ALL_FIELDS) {
     const raw = formData.get(f.path);
@@ -82,7 +83,7 @@ export async function saveContent(formData: FormData) {
 
 // ── settings (BACS, contact, map, door code, emails) ──
 export async function saveSettings(formData: FormData) {
-  await requireAdmin();
+  await requireCapability("settings");
   const s = (k: string) => String(formData.get(k) ?? "");
   const bacs = bacsSchema.parse({
     accountName: s("bacs.accountName"),
@@ -126,43 +127,46 @@ export async function saveSettings(formData: FormData) {
   revalidatePath("/admin/settings");
 }
 
-// ── pricing & operational rules ──
-export async function savePricing(formData: FormData) {
-  await requireAdmin();
-  const int = (k: string, fallback: number) => {
-    const n = parseInt(String(formData.get(k) ?? ""), 10);
-    return Number.isFinite(n) ? n : fallback;
-  };
+function formInt(formData: FormData, k: string, fallback: number) {
+  const n = parseInt(String(formData.get(k) ?? ""), 10);
+  return Number.isFinite(n) ? n : fallback;
+}
 
-  const tierUpdates = [];
-  for (let h = 1; h <= 8; h++) {
-    const price = int(`price.${h}`, 0);
-    tierUpdates.push(
-      prisma.rateTier.upsert({
+// ── rate tiers (£ per booking length) — owner only ──
+export async function savePricing(formData: FormData) {
+  await requireCapability("pricing");
+  await prisma.$transaction(
+    Array.from({ length: 8 }, (_, i) => {
+      const h = i + 1;
+      const price = formInt(formData, `price.${h}`, 0);
+      return prisma.rateTier.upsert({
         where: { hours: h },
         create: { hours: h, price },
         update: { price },
-      }),
-    );
-  }
-
-  await prisma.$transaction([
-    ...tierUpdates,
-    prisma.siteSettings.update({
-      where: { id: 1 },
-      data: {
-        openHour: int("openHour", 7),
-        closeHour: int("closeHour", 22),
-        minHours: int("minHours", 1),
-        maxHours: int("maxHours", 8),
-        resetHours: int("resetHours", 1),
-        daysAhead: int("daysAhead", 28),
-        pendingTtlHrs: int("pendingTtlHrs", 48),
-      },
+      });
     }),
-  ]);
+  );
   revalidateSite();
   revalidatePath("/admin/pricing");
+}
+
+// ── opening hours + booking-window rules — owner or sub-admin ──
+export async function saveHours(formData: FormData) {
+  await requireCapability("hours");
+  await prisma.siteSettings.update({
+    where: { id: 1 },
+    data: {
+      openHour: formInt(formData, "openHour", 7),
+      closeHour: formInt(formData, "closeHour", 22),
+      minHours: formInt(formData, "minHours", 1),
+      maxHours: formInt(formData, "maxHours", 8),
+      resetHours: formInt(formData, "resetHours", 1),
+      daysAhead: formInt(formData, "daysAhead", 28),
+      pendingTtlHrs: formInt(formData, "pendingTtlHrs", 48),
+    },
+  });
+  revalidateSite();
+  revalidatePath("/admin/hours");
 }
 
 // ── reorderable lists (generic CRUD) ──
@@ -202,7 +206,7 @@ function dataFromForm(listKey: string, formData: FormData) {
 }
 
 export async function addListItem(listKey: string) {
-  await requireAdmin();
+  await requireCapability("lists");
   const cfg = LISTS[listKey];
   const del = delegate(listKey);
   const max = await del.aggregate({ _max: { order: true } });
@@ -220,7 +224,7 @@ export async function updateListItem(
   id: string,
   formData: FormData,
 ) {
-  await requireAdmin();
+  await requireCapability("lists");
   await delegate(listKey).update({
     where: { id },
     data: dataFromForm(listKey, formData),
@@ -230,7 +234,7 @@ export async function updateListItem(
 }
 
 export async function deleteListItem(listKey: string, id: string) {
-  await requireAdmin();
+  await requireCapability("lists");
   await delegate(listKey).delete({ where: { id } });
   revalidateSite();
   revalidatePath("/admin/lists");
@@ -241,7 +245,7 @@ export async function moveListItem(
   id: string,
   dir: "up" | "down",
 ) {
-  await requireAdmin();
+  await requireCapability("lists");
   const del = delegate(listKey);
   const items = await del.findMany({ orderBy: { order: "asc" } });
   const idx = items.findIndex((i) => i.id === id);
@@ -261,7 +265,8 @@ export async function moveListItem(
 export async function uploadMedia(
   formData: FormData,
 ): Promise<{ url?: string; error?: string }> {
-  await requireAdmin();
+  // Only the content/lists editors (owner-only) upload media.
+  await requireCapability("content");
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) {
     return { error: "No file." };

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/session";
+import { requireCapability } from "@/lib/session";
 
 /**
  * Testing mode. On enter we snapshot the editable content (SiteSettings JSON +
@@ -133,7 +133,7 @@ async function capture(): Promise<Snapshot> {
 }
 
 export async function enterTestMode() {
-  await requireAdmin();
+  await requireCapability("testmode");
   const snap = await capture();
   await prisma.siteSettings.update({
     where: { id: 1 },
@@ -149,7 +149,7 @@ export async function enterTestMode() {
 }
 
 export async function exitTestMode() {
-  await requireAdmin();
+  await requireCapability("testmode");
   const s = await prisma.siteSettings.findUniqueOrThrow({ where: { id: 1 } });
   if (!s.testMode) return;
   const snap = s.testSnapshot as unknown as Snapshot | null;

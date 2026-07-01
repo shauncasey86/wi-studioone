@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { requireCapability } from "@/lib/session";
 import {
   confirmBooking,
   cancelBooking,
@@ -7,6 +8,7 @@ import {
 } from "@/lib/admin/booking-actions";
 import { getAvailabilityWindow } from "@/lib/booking/service";
 import { todayKey, addDays, isoOf } from "@/lib/booking/time";
+import PageHeader from "@/components/admin/PageHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -35,12 +37,16 @@ function money(pence: number) {
 function hh(h: number) {
   return String(h).padStart(2, "0") + ":00";
 }
+function titleCase(s: string) {
+  return s.charAt(0) + s.slice(1).toLowerCase();
+}
 
 export default async function BookingsPage({
   searchParams,
 }: {
   searchParams: Promise<{ status?: string }>;
 }) {
+  await requireCapability("bookings");
   const sp = await searchParams;
   const filter = STATUSES.includes(sp.status as Status)
     ? (sp.status as Status)
@@ -62,84 +68,102 @@ export default async function BookingsPage({
 
   return (
     <>
-      <h1>Bookings</h1>
-      <p className="muted">
-        Confirm a paid booking to email the guest their door code. Cancel to
-        free the slot.
-      </p>
+      <PageHeader
+        eyebrow="Operations"
+        title={
+          <>
+            The <em>diary.</em>
+          </>
+        }
+        lede="Confirm a paid booking to email the guest their door code. Cancel to free the slot."
+      />
 
-      <div className="row" style={{ margin: "1.2rem 0", gap: "0.8rem" }}>
-        <Link className="ghost btn" href="/admin/bookings">
+      <nav className="admin-filters" aria-label="Filter bookings">
+        <Link
+          className="admin-chip"
+          href="/admin/bookings"
+          aria-current={!filter ? "true" : undefined}
+        >
           All
         </Link>
         {STATUSES.map((s) => (
           <Link
             key={s}
-            className="ghost btn"
+            className="admin-chip"
             href={`/admin/bookings?status=${s}`}
+            aria-current={filter === s ? "true" : undefined}
           >
-            {s} ({countOf(s)})
+            {titleCase(s)}
+            <span className="admin-chip-count">{countOf(s)}</span>
           </Link>
         ))}
-      </div>
+      </nav>
 
       {bookings.length === 0 ? (
-        <p className="muted">
-          No bookings{filter ? ` with status ${filter}` : ""}.
+        <p className="admin-empty">
+          No bookings{filter ? ` with status ${filter.toLowerCase()}` : ""}.
         </p>
       ) : (
-        bookings.map((b) => (
-          <div className="list-item" key={b.id}>
-            <div className="row" style={{ justifyContent: "space-between" }}>
-              <div>
-                <strong>{isoOf(b.date)}</strong> · {hh(b.startHour)}–
-                {hh(b.endHour)} · {b.hours}h · {money(b.pricePence)}
+        <ul className="admin-bookings">
+          {bookings.map((b) => (
+            <li className="admin-booking" key={b.id}>
+              <div className="admin-booking-main">
+                <p className="admin-booking-when">
+                  <strong>{isoOf(b.date)}</strong>
+                  <span>
+                    {hh(b.startHour)}–{hh(b.endHour)}
+                  </span>
+                  <span className="admin-booking-dot">·</span>
+                  <span>{b.hours}h</span>
+                  <span className="admin-booking-dot">·</span>
+                  <span>{money(b.pricePence)}</span>
+                </p>
+                <p className="admin-booking-who">
+                  {b.name} · {b.email} · ref {b.reference}
+                  {b.confirmedAt ? " · code sent" : ""}
+                </p>
               </div>
-              <div className="hint">{b.status}</div>
-            </div>
-            <div className="hint" style={{ marginTop: "0.4rem" }}>
-              {b.name} · {b.email} · ref {b.reference}
-              {b.confirmedAt ? " · code sent" : ""}
-            </div>
-            <div className="ops">
-              {b.status === "PENDING" && (
-                <form action={confirmBooking.bind(null, b.id)}>
-                  <button className="btn" type="submit">
-                    Confirm &amp; email code
-                  </button>
-                </form>
-              )}
-              {b.status === "CONFIRMED" && (
-                <form action={resendDoorCode.bind(null, b.id)}>
-                  <button className="ghost btn" type="submit">
-                    Resend code
-                  </button>
-                </form>
-              )}
-              {(b.status === "PENDING" || b.status === "CONFIRMED") && (
-                <form action={cancelBooking.bind(null, b.id)}>
-                  <button className="ghost btn" type="submit">
-                    Cancel
-                  </button>
-                </form>
-              )}
-            </div>
-          </div>
-        ))
+              <div className="admin-booking-side">
+                <span
+                  className="admin-status"
+                  data-status={b.status.toLowerCase()}
+                >
+                  {titleCase(b.status)}
+                </span>
+                <div className="admin-booking-ops">
+                  {b.status === "PENDING" && (
+                    <form action={confirmBooking.bind(null, b.id)}>
+                      <button className="btn" type="submit">
+                        Confirm &amp; email code
+                      </button>
+                    </form>
+                  )}
+                  {b.status === "CONFIRMED" && (
+                    <form action={resendDoorCode.bind(null, b.id)}>
+                      <button className="btn ghost" type="submit">
+                        Resend code
+                      </button>
+                    </form>
+                  )}
+                  {(b.status === "PENDING" || b.status === "CONFIRMED") && (
+                    <form action={cancelBooking.bind(null, b.id)}>
+                      <button className="btn ghost" type="submit">
+                        Cancel
+                      </button>
+                    </form>
+                  )}
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
       )}
 
       <h2>Four-week overview</h2>
-      <p className="muted">
-        Held/booked intervals per day (incl. blocks & holds).
+      <p className="admin-lede">
+        Held or booked intervals per day (including blocks &amp; holds).
       </p>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(7, 1fr)",
-          gap: "0.4rem",
-          marginTop: "0.8rem",
-        }}
-      >
+      <div className="admin-calendar">
         {Object.keys(window)
           .map(Number)
           .sort((a, b) => a - b)
@@ -148,27 +172,21 @@ export default async function BookingsPage({
             const intervals = window[off] || [];
             return (
               <div
+                className="admin-day"
                 key={off}
-                style={{
-                  border: "1px solid rgba(20,17,11,.16)",
-                  padding: "0.4rem 0.5rem",
-                  background: intervals.length
-                    ? "rgba(217,131,36,.10)"
-                    : "transparent",
-                  fontSize: 12,
-                }}
+                data-busy={intervals.length > 0 || undefined}
               >
-                <div className="hint">
+                <p className="admin-day-head">
                   {DOW[d.getUTCDay() === 0 ? 6 : d.getUTCDay() - 1]}{" "}
                   {d.getUTCDate()} {MON[d.getUTCMonth()]}
-                </div>
+                </p>
                 {intervals.length === 0 ? (
-                  <div style={{ opacity: 0.5 }}>free</div>
+                  <p className="admin-day-free">free</p>
                 ) : (
                   intervals.map((iv, i) => (
-                    <div key={i}>
+                    <p className="admin-day-iv" key={i}>
                       {iv.s}–{iv.e}
-                    </div>
+                    </p>
                   ))
                 )}
               </div>

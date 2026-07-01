@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
+import { requireCapability } from "@/lib/session";
 import { createBlock, deleteBlock } from "@/lib/admin/booking-actions";
 import { isoOf } from "@/lib/booking/time";
+import PageHeader from "@/components/admin/PageHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -9,17 +11,22 @@ function hh(h: number) {
 }
 
 export default async function BlocksPage() {
+  await requireCapability("bookings");
   const blocks = await prisma.block.findMany({
     orderBy: [{ date: "asc" }, { startHour: "asc" }],
   });
 
   return (
     <>
-      <h1>One-off blocks</h1>
-      <p className="muted">
-        Block a specific date/time (maintenance, the owner&apos;s own use).
-        Blocks subtract from availability just like bookings.
-      </p>
+      <PageHeader
+        eyebrow="Operations"
+        title={
+          <>
+            One-off <em>blocks.</em>
+          </>
+        }
+        lede="Block a specific date and time — maintenance, or the owner's own use. Blocks subtract from availability just like bookings."
+      />
 
       <h2>Add a block</h2>
       <form action={createBlock}>
