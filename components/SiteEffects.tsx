@@ -5,6 +5,7 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
 import { fetchAvailability } from "@/lib/availability";
+import { getSunTimes } from "@/lib/suntimes";
 
 /**
  * StudioONE — motion & interaction, ported from the inline script in
@@ -13,7 +14,13 @@ import { fetchAvailability } from "@/lib/availability";
  * GSAP/ScrollTrigger reveals. It enhances the server-rendered DOM by id/class,
  * exactly as the original did. prefers-reduced-motion is honoured throughout.
  */
-export default function SiteEffects() {
+export default function SiteEffects({
+  lat = 53.7773,
+  lng = -0.3203,
+}: {
+  lat?: number;
+  lng?: number;
+}) {
   useEffect(() => {
     const reduce = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
@@ -81,6 +88,37 @@ export default function SiteEffects() {
     upBar();
     window.addEventListener("scroll", upBar, { passive: true, signal });
     if (lenis) lenis.on("scroll", upBar);
+
+    /* ───────── mobile menu ───────── */
+    const toggle = document.getElementById("bar-toggle");
+    const closeMenu = () => {
+      if (!bar) return;
+      bar.classList.remove("menu-open");
+      toggle?.setAttribute("aria-expanded", "false");
+      toggle?.setAttribute("aria-label", "Open menu");
+    };
+    if (toggle && bar) {
+      toggle.addEventListener(
+        "click",
+        () => {
+          const open = bar.classList.toggle("menu-open");
+          toggle.setAttribute("aria-expanded", open ? "true" : "false");
+          toggle.setAttribute("aria-label", open ? "Close menu" : "Open menu");
+        },
+        { signal },
+      );
+      // close on nav link click and on Escape
+      bar
+        .querySelectorAll("nav a")
+        .forEach((a) => a.addEventListener("click", closeMenu, { signal }));
+      window.addEventListener(
+        "keydown",
+        (e) => {
+          if (e.key === "Escape") closeMenu();
+        },
+        { signal },
+      );
+    }
 
     /* ───────── custom cursor ───────── */
     const cur = document.getElementById("cur");
@@ -192,6 +230,8 @@ export default function SiteEffects() {
       const bookedG = document.getElementById("arc-booked-g")!;
       const elapsed = document.getElementById("arc-elapsed")!;
       const sunG = document.getElementById("arc-sun")!;
+      const daylight = document.getElementById("arc-daylight");
+      const sunTimesG = document.getElementById("arc-suntimes");
       const cap = document.getElementById("arc-cap");
       const NS = "http://www.w3.org/2000/svg";
 
@@ -199,6 +239,8 @@ export default function SiteEffects() {
       ticksG.innerHTML = "";
       bookedG.innerHTML = "";
       sunG.innerHTML = "";
+      if (sunTimesG) sunTimesG.innerHTML = "";
+      if (daylight) daylight.setAttribute("d", "");
 
       track.setAttribute("d", arcD(ARC.cx, ARC.cy, ARC.r, 180, 0, 120));
 
@@ -225,6 +267,57 @@ export default function SiteEffects() {
         tx.textContent = (h < 10 ? "0" : "") + h + ":00";
         ticksG.appendChild(tx);
       });
+
+      // ── live daylight: today's sunrise → sunset for this location ──
+      const p2 = (n: number) => (n < 10 ? "0" : "") + n;
+      const hhmmOf = (d: Date) => p2(d.getHours()) + ":" + p2(d.getMinutes());
+      const localF = (d: Date) => d.getHours() + d.getMinutes() / 60;
+      const sun = getSunTimes(new Date(), lat, lng);
+      let sunHint = "";
+      if (sun) {
+        const srF = localF(sun.sunrise),
+          ssF = localF(sun.sunset);
+        const bandS = Math.max(OPEN, Math.min(CLOSE, srF)),
+          bandE = Math.max(OPEN, Math.min(CLOSE, ssF));
+        if (daylight && bandE > bandS) {
+          daylight.setAttribute(
+            "d",
+            arcD(ARC.cx, ARC.cy, ARC.r, timeToDeg(bandS), timeToDeg(bandE), 60),
+          );
+        }
+        // sunrise / sunset ticks + labels, only when they fall in open hours
+        const mark = (d: Date, glyph: string) => {
+          const t = localF(d);
+          if (!sunTimesG || t < OPEN || t > CLOSE) return;
+          const dg = timeToDeg(t);
+          const inP = pol(ARC.cx, ARC.cy, ARC.r - 22, dg),
+            outP = pol(ARC.cx, ARC.cy, ARC.r + 18, dg);
+          const ln = document.createElementNS(NS, "line");
+          ln.setAttribute("x1", inP.x.toFixed(2));
+          ln.setAttribute("y1", inP.y.toFixed(2));
+          ln.setAttribute("x2", outP.x.toFixed(2));
+          ln.setAttribute("y2", outP.y.toFixed(2));
+          ln.setAttribute("class", "arc-suntick");
+          sunTimesG.appendChild(ln);
+          const lp = pol(ARC.cx, ARC.cy, ARC.r + 60, dg);
+          const tx = document.createElementNS(NS, "text");
+          tx.setAttribute("x", lp.x.toFixed(1));
+          tx.setAttribute("y", lp.y.toFixed(1));
+          tx.setAttribute("text-anchor", "middle");
+          tx.setAttribute("class", "arc-sunlab");
+          tx.textContent = glyph + " " + hhmmOf(d);
+          sunTimesG.appendChild(tx);
+        };
+        mark(sun.sunrise, "↑");
+        mark(sun.sunset, "↓");
+        const nowF2 = new Date().getHours() + new Date().getMinutes() / 60;
+        sunHint =
+          nowF2 < srF
+            ? "sunrise " + hhmmOf(sun.sunrise)
+            : nowF2 > ssF
+              ? "after dark"
+              : "light till " + hhmmOf(sun.sunset);
+      }
 
       todayBookings.forEach((b) => {
         const d0 = timeToDeg(hhmmToFloat(b.s)),
@@ -279,12 +372,16 @@ export default function SiteEffects() {
         (halo as SVGElement).style.opacity = ".08";
         lab.textContent = "Closed";
         if (cap)
-          cap.textContent = nowF < OPEN ? "opens 07:00" : "closed for the day";
+          cap.textContent =
+            (nowF < OPEN ? "opens 07:00" : "closed for the day") +
+            (sunHint ? " · " + sunHint : "");
         return;
       }
 
       lab.textContent = hh + ":" + mm;
-      if (cap) cap.textContent = "now · " + hh + ":" + mm + " in Hull";
+      if (cap)
+        cap.textContent =
+          "now · " + hh + ":" + mm + (sunHint ? " · " + sunHint : " · Hull");
 
       if (reduce) {
         placeSun(nowF);
@@ -491,7 +588,7 @@ export default function SiteEffects() {
       if (lenis) lenis.destroy();
       document.documentElement.classList.remove("cur-live");
     };
-  }, []);
+  }, [lat, lng]);
 
   return null;
 }

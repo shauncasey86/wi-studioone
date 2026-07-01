@@ -8,6 +8,7 @@ import {
 } from "@/lib/admin/actions";
 import { resetList } from "@/lib/admin/reset";
 import RichField from "@/components/admin/RichField";
+import ImageField from "@/components/admin/ImageField";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +32,7 @@ export default async function ListsPage() {
     manifestoFoots: data.manifestoFoots,
     kinds: data.kinds,
     howSteps: data.howSteps,
+    roomPhotos: data.roomPhotos,
     roomFacts: data.roomFacts,
     changeoverItems: data.changeoverItems,
     policies: data.policies,
@@ -61,6 +63,8 @@ export default async function ListsPage() {
                         <label htmlFor={id}>{field.label}</label>
                         {field.kind === "rich" ? (
                           <RichField name={field.key} defaultValue={val} />
+                        ) : field.kind === "image" ? (
+                          <ImageField name={field.key} defaultValue={val} />
                         ) : field.kind === "textarea" ||
                           field.kind === "links" ? (
                           <textarea

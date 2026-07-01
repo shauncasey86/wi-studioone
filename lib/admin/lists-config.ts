@@ -2,7 +2,7 @@
 // Prisma model and a set of fields. `links` is a special kind (FooterColumn):
 // edited as one "label | href" per line.
 
-export type ListFieldKind = "text" | "textarea" | "rich" | "links";
+export type ListFieldKind = "text" | "textarea" | "rich" | "links" | "image";
 export type ListField = { key: string; label: string; kind: ListFieldKind };
 export type ListConfig = { model: string; label: string; fields: ListField[] };
 
@@ -45,6 +45,14 @@ export const LISTS: Record<string, ListConfig> = {
       { key: "label", label: "Label (e.g. Step 01)", kind: "text" },
       { key: "heading", label: "Heading (rich)", kind: "rich" },
       { key: "body", label: "Body", kind: "textarea" },
+    ],
+  },
+  roomPhotos: {
+    model: "roomPhoto",
+    label: "§03 Room photos (building / room)",
+    fields: [
+      { key: "url", label: "Photo (PNG/JPG/SVG)", kind: "image" },
+      { key: "alt", label: "Alt / caption", kind: "text" },
     ],
   },
   roomFacts: {

@@ -170,6 +170,10 @@ body::before{
   font-family:var(--mono); font-weight:700; font-size:.34em; letter-spacing:.04em;
   color:var(--marigold); transform:translateY(.15em);
 }
+/* site-wide logo — replaces the wordmark when one is set */
+.mark-logo{ height:2rem; width:auto; max-width:min(58vw,320px); object-fit:contain; transition:height .4s ease; }
+.bar.pin .mark-logo{ height:1.7rem; }
+.foot .mark-logo{ height:2.4rem; }
 .bar nav{ display:flex; gap:2.2rem; }
 .bar nav a{ position:relative; padding:.25rem 0; }
 .bar nav a::after{
@@ -184,7 +188,30 @@ body::before{
   animation:beat 2.4s ease-in-out infinite;
 }
 @keyframes beat{ 0%,100%{opacity:.35} 50%{opacity:1} }
-@media (max-width:920px){ .bar nav{ display:none; } }
+
+/* hamburger toggle — shown only on the mobile drawer breakpoint */
+.bar-toggle{ display:none; width:44px; height:44px; margin:-.5rem -.5rem -.5rem 0; align-items:center; justify-content:center; color:inherit; flex:0 0 auto; }
+.bar-bars{ display:inline-flex; flex-direction:column; gap:5px; width:22px; }
+.bar-bars span{ display:block; height:2px; width:100%; background:currentColor; transition:transform .3s ease, opacity .2s ease; }
+.bar.menu-open .bar-bars span:nth-child(1){ transform:translateY(7px) rotate(45deg); }
+.bar.menu-open .bar-bars span:nth-child(2){ opacity:0; }
+.bar.menu-open .bar-bars span:nth-child(3){ transform:translateY(-7px) rotate(-45deg); }
+
+@media (max-width:920px){
+  .bar-toggle{ display:inline-flex; }
+  .bar > .frame{ position:relative; }
+  .bar nav{
+    display:flex; position:absolute; top:calc(100% + .7rem); left:0; right:0;
+    flex-direction:column; gap:0; padding:.4rem 1rem;
+    background:var(--umber-3); border:1px solid rgba(236,228,211,.14); color:var(--paper);
+    opacity:0; transform:translateY(-8px); pointer-events:none;
+    transition:opacity .3s ease, transform .3s ease;
+  }
+  .bar nav a{ padding:.95rem .2rem; border-bottom:1px solid rgba(236,228,211,.08); font-size:.82rem; }
+  .bar nav a:last-child{ border-bottom:0; }
+  .bar nav a::after{ display:none; }
+  .bar.menu-open nav{ opacity:1; transform:translateY(0); pointer-events:auto; }
+}
 @media (max-width:560px){ .bar .status{ display:none; } }
 
 /* ════════════════════════════════════════════════════════
@@ -258,6 +285,10 @@ body::before{
   position:absolute; left:50%; bottom:-.4rem; transform:translateX(-50%); text-align:center;
   font-family:var(--mono); font-size:.66rem; letter-spacing:.18em; text-transform:uppercase; color:var(--oat-quiet);
 }
+/* live daylight band — sunrise→sunset for today, behind the track */
+.arc-daylight{ fill:none; stroke:var(--marigold); stroke-opacity:.16; stroke-width:16; stroke-linecap:round; }
+.arc-suntick{ stroke:var(--marigold-2); stroke-width:1.5; stroke-opacity:.85; }
+.arc-sunlab{ font-family:var(--mono); font-size:12px; letter-spacing:.05em; fill:var(--marigold-2); text-transform:uppercase; }
 .arc-track{ fill:none; stroke:rgba(236,228,211,.14); stroke-width:2; }
 .arc-elapsed{ fill:none; stroke:var(--marigold); stroke-width:2.5; stroke-linecap:round; filter:drop-shadow(0 0 8px rgba(217,131,36,.5)); }
 .arc-booked{ fill:none; stroke:rgba(236,228,211,.42); stroke-width:6; stroke-linecap:butt; }
@@ -336,6 +367,11 @@ body::before{
 .roomhero > .frame{ position:relative; z-index:1; }
 .roomhero-title{ font-family:var(--serif); font-weight:300; font-size:clamp(3rem,11vw,9.5rem); line-height:.88; letter-spacing:-.045em; color:var(--paper); font-variation-settings:"opsz" 144; text-wrap:balance; max-width:16ch; }
 .roomhero-title em{ font-style:italic; color:var(--marigold); font-variation-settings:"opsz" 144,"WONK" 1; }
+/* photos of the building / room */
+.room-gallery{ position:relative; z-index:1; margin-top:clamp(2.5rem,6vw,4.5rem); display:grid; grid-template-columns:repeat(3,1fr); gap:clamp(.6rem,1.4vw,1rem); }
+@media (max-width:720px){ .room-gallery{ grid-template-columns:1fr 1fr; } }
+@media (max-width:460px){ .room-gallery{ grid-template-columns:1fr; } }
+.room-shot{ width:100%; height:clamp(170px,22vw,270px); object-fit:cover; border:1px solid rgba(236,228,211,.16); filter:saturate(.92) contrast(1.02); }
 
 /* ── §04 how ── */
 .how{ background:var(--paper-3); padding:clamp(3.25rem,7vw,5.5rem) 0; border-top:var(--rule); }
@@ -495,7 +531,18 @@ button.cell:focus-visible{ outline:2px solid var(--marigold); outline-offset:2px
 .pay-note strong{ color:var(--oat-dim); font-weight:700; }
 .pay-btn{ justify-self:start; }
 
-/* the confirmation that replaces the picker once payment is flagged */
+/* confirmation modal — shown once a reservation is placed */
+.modal{ position:fixed; inset:0; z-index:200; display:grid; place-items:center; padding:clamp(1rem,4vw,2rem); }
+.modal[hidden]{ display:none; }
+.modal-backdrop{ position:absolute; inset:0; background:rgba(12,8,4,.74); -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px); }
+.modal-card{ position:relative; z-index:1; width:min(640px,100%); max-height:90vh; overflow:auto; background:var(--umber-2); border:1px solid rgba(236,228,211,.16); box-shadow:0 30px 80px rgba(0,0,0,.5); animation:modal-in .35s cubic-bezier(.2,.7,.2,1); }
+@keyframes modal-in{ from{ opacity:0; transform:translateY(14px) scale(.985); } to{ opacity:1; transform:none; } }
+.modal-close{ position:absolute; top:.5rem; right:.5rem; z-index:2; width:44px; height:44px; display:grid; place-items:center; font-size:1.9rem; line-height:1; color:var(--oat-dim); transition:color .2s ease; }
+.modal-close:hover{ color:var(--paper); }
+.modal-close:focus-visible{ outline:2px solid var(--marigold); outline-offset:2px; }
+.modal .booked{ margin:0; }
+
+/* the confirmation body */
 .booked{ padding:clamp(2rem,5vw,3.5rem) clamp(1.4rem,3vw,2.5rem); display:grid; gap:1.5rem; }
 .booked-k{ font-family:var(--mono); font-size:.66rem; letter-spacing:.22em; text-transform:uppercase; color:var(--marigold); display:inline-flex; align-items:center; gap:.6rem; }
 .booked-k::before{ content:""; width:7px; height:7px; border-radius:50%; background:var(--marigold); animation:beat 2.4s ease-in-out infinite; }
@@ -537,7 +584,10 @@ button.cell:focus-visible{ outline:2px solid var(--marigold); outline-offset:2px
 .docket-foot .sign{ color:var(--clay); }
 
 /* rates */
-.rates-strip{ display:grid; gap:1rem; border-top:var(--rule-soft); padding-top:var(--sp-block); }
+.rates-strip{ display:grid; gap:1.1rem; border-top:var(--rule-soft); padding-top:var(--sp-block); }
+/* rates list on the left, the note beside it on the right */
+.rates-body{ display:grid; grid-template-columns:minmax(0,1.05fr) minmax(0,1fr); gap:clamp(1.25rem,3.5vw,3rem); align-items:start; }
+@media (max-width:640px){ .rates-body{ grid-template-columns:1fr; gap:1rem; } }
 .rates-h{ font-family:var(--mono); font-size:.66rem; letter-spacing:.18em; text-transform:uppercase; color:var(--moss); }
 .rates{ list-style:none; display:flex; flex-wrap:wrap; gap:.55rem; }
 .rates li{ display:inline-flex; align-items:baseline; gap:.5ch; padding:.5rem .85rem; border:1px solid rgba(20,17,11,.16); font-family:var(--mono); font-size:.7rem; letter-spacing:.06em; text-transform:uppercase; color:var(--moss); }
@@ -611,13 +661,16 @@ button.cell:focus-visible{ outline:2px solid var(--marigold); outline-offset:2px
 <header class="bar" role="banner">
   <div class="frame">
     <a class="mark" href="#top" aria-label="StudioONE — home">Studio<span class="hr">ONE</span></a>
-    <nav aria-label="Primary">
+    <nav id="primary-nav" aria-label="Primary">
       <a href="#days" data-cur="Read">The day</a>
       <a href="#room" data-cur="Look">The room</a>
       <a href="#care" data-cur="Upkeep">Upkeep</a>
       <a href="#book" data-cur="Book">Book</a>
     </nav>
     <span class="status"><span id="status">Open · 07:00–22:00</span></span>
+    <button type="button" class="bar-toggle" id="bar-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="primary-nav">
+      <span class="bar-bars" aria-hidden="true"><span></span><span></span><span></span></span>
+    </button>
   </div>
 </header>
 
@@ -656,7 +709,9 @@ button.cell:focus-visible{ outline:2px solid var(--marigold); outline-offset:2px
           <svg id="arc" viewBox="0 0 880 510" role="img" aria-labelledby="arc-title">
             <title id="arc-title">Today's open hours, 07:00 to 22:00, with the current time marked</title>
             <line class="arc-base" x1="60" y1="470" x2="820" y2="470"></line>
+            <path id="arc-daylight" class="arc-daylight"></path>
             <g id="arc-ticks"></g>
+            <g id="arc-suntimes"></g>
             <path id="arc-track" class="arc-track"></path>
             <g id="arc-booked-g"></g>
             <path id="arc-elapsed" class="arc-elapsed"></path>
@@ -721,6 +776,11 @@ button.cell:focus-visible{ outline:2px solid var(--marigold); outline-offset:2px
 <section class="roomhero" id="room" aria-labelledby="room-title">
   <div class="frame">
     <h2 class="roomhero-title" id="room-title">Bare. Daylit. <em>Looked after.</em></h2>
+    <div class="room-gallery" aria-label="Photos of the room">
+      <img class="room-shot" src="https://images.unsplash.com/photo-1722604819704-78b6d9c26ea9?auto=format&fit=crop&w=900&h=1100&q=80&crop=entropy" alt="The room — empty, daylit, oak floor, lime-plaster walls." loading="lazy">
+      <img class="room-shot" src="https://images.unsplash.com/photo-1722604819704-78b6d9c26ea9?auto=format&fit=crop&w=900&h=1100&q=80&crop=edges" alt="Morning light across the bare boards." loading="lazy">
+      <img class="room-shot" src="https://images.unsplash.com/photo-1722604819704-78b6d9c26ea9?auto=format&fit=crop&w=900&h=1100&q=80&crop=top" alt="The room set for the day ahead." loading="lazy">
+    </div>
   </div>
 </section>
 
@@ -842,6 +902,15 @@ button.cell:focus-visible{ outline:2px solid var(--marigold); outline-offset:2px
       </div>
     </div>
     <p class="vh" id="book-live" role="status" aria-live="polite"></p>
+
+    <!-- confirmation modal — filled + shown by renderPending() -->
+    <div class="modal" id="book-modal" hidden>
+      <div class="modal-backdrop" id="book-modal-backdrop"></div>
+      <div class="modal-card" id="book-modal-card" role="dialog" aria-modal="true" aria-labelledby="book-modal-title" tabindex="-1">
+        <button type="button" class="modal-close" id="book-modal-close" aria-label="Close confirmation"><span aria-hidden="true">×</span></button>
+        <div id="book-modal-body"></div>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -885,11 +954,13 @@ button.cell:focus-visible{ outline:2px solid var(--marigold); outline-offset:2px
 
       <div class="rates-strip">
         <span class="rates-h">By the hour, kinder by the day</span>
-        <ul class="rates">
-          <li>1h <b>£45</b></li><li>2h <b>£80</b></li><li>3h <b>£110</b></li><li>4h <b>£140</b></li>
-          <li>5h <b>£170</b></li><li>6h <b>£200</b></li><li>7h <b>£225</b></li><li>8h <b>£250</b></li>
-        </ul>
-        <p class="rates-note">Every hour in between is priced to match; eight hours is the longest single booking, and you pay by bank transfer at checkout. Need a full day-plus or a block of dates? <a href="mailto:hello@studioone.room?subject=Block%20booking%20%E2%80%94%20StudioONE">Message the studio</a> and we'll set a rate.</p>
+        <div class="rates-body">
+          <ul class="rates">
+            <li>1h <b>£45</b></li><li>2h <b>£80</b></li><li>3h <b>£110</b></li><li>4h <b>£140</b></li>
+            <li>5h <b>£170</b></li><li>6h <b>£200</b></li><li>7h <b>£225</b></li><li>8h <b>£250</b></li>
+          </ul>
+          <p class="rates-note">Every hour in between is priced to match; eight hours is the longest single booking, and you pay by bank transfer at checkout. Need a full day-plus or a block of dates? <a href="mailto:hello@studioone.room?subject=Block%20booking%20%E2%80%94%20StudioONE">Message the studio</a> and we'll set a rate.</p>
+        </div>
       </div>
 
       <div class="policy-grid">
@@ -992,6 +1063,19 @@ button.cell:focus-visible{ outline:2px solid var(--marigold); outline-offset:2px
   function upBar(){ if(!bar||!hero) return; var th=hero.offsetHeight*0.6; var y=window.scrollY||document.documentElement.scrollTop; bar.classList.toggle('pin', y>th); }
   upBar(); window.addEventListener('scroll', upBar, {passive:true}); if(lenis) lenis.on('scroll', upBar);
 
+  /* ───────── mobile menu ───────── */
+  var barToggle=document.getElementById('bar-toggle');
+  function closeMenu(){ if(!bar) return; bar.classList.remove('menu-open'); if(barToggle){ barToggle.setAttribute('aria-expanded','false'); barToggle.setAttribute('aria-label','Open menu'); } }
+  if(barToggle && bar){
+    barToggle.addEventListener('click', function(){
+      var open=bar.classList.toggle('menu-open');
+      barToggle.setAttribute('aria-expanded', open?'true':'false');
+      barToggle.setAttribute('aria-label', open?'Close menu':'Open menu');
+    });
+    bar.querySelectorAll('nav a').forEach(function(a){ a.addEventListener('click', closeMenu); });
+    window.addEventListener('keydown', function(e){ if(e.key==='Escape') closeMenu(); });
+  }
+
   /* ───────── custom cursor ───────── */
   var cur=document.getElementById('cur'), ring=document.getElementById('cur-ring');
   var fine=window.matchMedia('(hover:hover) and (pointer:fine)').matches;
@@ -1008,6 +1092,27 @@ button.cell:focus-visible{ outline:2px solid var(--marigold); outline-offset:2px
       el.addEventListener('mouseenter', function(){ var l=el.dataset.cur||(el.tagName==='BUTTON'?'Tap':'Open'); cur.setAttribute('data-label',l); cur.classList.add('on'); ring.classList.add('on'); });
       el.addEventListener('mouseleave', function(){ cur.classList.remove('on'); ring.classList.remove('on'); });
     });
+  }
+
+  /* ── sunrise / sunset (NOAA "suncalc" core) — no network, returns Dates ── */
+  function getSunTimes(date, lat, lng){
+    var rad=Math.PI/180, dayMs=86400000, J1970=2440588, J2000=2451545, e=rad*23.4397, J0=0.0009;
+    var d = date.valueOf()/dayMs - 0.5 + J1970 - J2000;
+    var lw = rad*-lng, phi = rad*lat;
+    var n = Math.round(d - J0 - lw/(2*Math.PI));
+    var ds = J0 + (0+lw)/(2*Math.PI) + n;
+    var M = rad*(357.5291 + 0.98560028*ds);
+    var L = M + rad*(1.9148*Math.sin(M)+0.02*Math.sin(2*M)+0.0003*Math.sin(3*M)) + rad*102.9372 + Math.PI;
+    var dec = Math.asin(Math.sin(e)*Math.sin(L));
+    var Jnoon = J2000 + ds + 0.0053*Math.sin(M) - 0.0069*Math.sin(2*L);
+    var h = -0.833*rad;
+    var w = Math.acos((Math.sin(h)-Math.sin(phi)*Math.sin(dec))/(Math.cos(phi)*Math.cos(dec)));
+    if(!isFinite(w)) return null;
+    var dsSet = J0 + (w+lw)/(2*Math.PI) + n;
+    var Jset = J2000 + dsSet + 0.0053*Math.sin(M) - 0.0069*Math.sin(2*L);
+    var Jrise = Jnoon - (Jset - Jnoon);
+    var fromJ = function(j){ return new Date((j + 0.5 - J1970) * dayMs); };
+    return { sunrise: fromJ(Jrise), sunset: fromJ(Jset) };
   }
 
   /* ════════════════════════════════════════════════════════
@@ -1031,8 +1136,12 @@ button.cell:focus-visible{ outline:2px solid var(--marigold); outline-offset:2px
     var bookedG=document.getElementById('arc-booked-g');
     var elapsed=document.getElementById('arc-elapsed');
     var sunG=document.getElementById('arc-sun');
+    var daylight=document.getElementById('arc-daylight');
+    var sunTimesG=document.getElementById('arc-suntimes');
     var cap=document.getElementById('arc-cap');
     var NS='http://www.w3.org/2000/svg';
+    if(sunTimesG) sunTimesG.innerHTML='';
+    if(daylight) daylight.setAttribute('d','');
 
     // track
     track.setAttribute('d', arcD(ARC.cx,ARC.cy,ARC.r,180,0,120));
@@ -1057,6 +1166,34 @@ button.cell:focus-visible{ outline:2px solid var(--marigold); outline-offset:2px
       tx.textContent=(h<10?'0':'')+h+':00';
       ticksG.appendChild(tx);
     });
+
+    // ── live daylight: today's sunrise → sunset for Hull ──
+    var p2=function(n){ return (n<10?'0':'')+n; };
+    var hhmmOf=function(d){ return p2(d.getHours())+':'+p2(d.getMinutes()); };
+    var localF=function(d){ return d.getHours()+d.getMinutes()/60; };
+    var sun=getSunTimes(new Date(), 53.7773, -0.3203);
+    var sunHint='';
+    if(sun){
+      var srF=localF(sun.sunrise), ssF=localF(sun.sunset);
+      var bandS=Math.max(OPEN,Math.min(CLOSE,srF)), bandE=Math.max(OPEN,Math.min(CLOSE,ssF));
+      if(daylight && bandE>bandS){ daylight.setAttribute('d', arcD(ARC.cx,ARC.cy,ARC.r,timeToDeg(bandS),timeToDeg(bandE),60)); }
+      var mark=function(dt,glyph){
+        var t=localF(dt); if(!sunTimesG || t<OPEN || t>CLOSE) return;
+        var dg=timeToDeg(t), inP=pol(ARC.cx,ARC.cy,ARC.r-22,dg), outP=pol(ARC.cx,ARC.cy,ARC.r+18,dg);
+        var ln=document.createElementNS(NS,'line');
+        ln.setAttribute('x1',inP.x.toFixed(2)); ln.setAttribute('y1',inP.y.toFixed(2));
+        ln.setAttribute('x2',outP.x.toFixed(2)); ln.setAttribute('y2',outP.y.toFixed(2));
+        ln.setAttribute('class','arc-suntick'); sunTimesG.appendChild(ln);
+        var lp=pol(ARC.cx,ARC.cy,ARC.r+60,dg);
+        var t2=document.createElementNS(NS,'text');
+        t2.setAttribute('x',lp.x.toFixed(1)); t2.setAttribute('y',lp.y.toFixed(1));
+        t2.setAttribute('text-anchor','middle'); t2.setAttribute('class','arc-sunlab');
+        t2.textContent=glyph+' '+hhmmOf(dt); sunTimesG.appendChild(t2);
+      };
+      mark(sun.sunrise,'↑'); mark(sun.sunset,'↓');
+      var nowF2=new Date().getHours()+new Date().getMinutes()/60;
+      sunHint = nowF2<srF ? 'sunrise '+hhmmOf(sun.sunrise) : nowF2>ssF ? 'after dark' : 'light till '+hhmmOf(sun.sunset);
+    }
 
     // booked notches — today's bookings, from the same source the diary uses
     var todayBookings = (window.BOOKINGS && window.BOOKINGS[0]) ? window.BOOKINGS[0] : [];
@@ -1097,12 +1234,12 @@ button.cell:focus-visible{ outline:2px solid var(--marigold); outline-offset:2px
       placeSun(endT); setElapsed(endT);
       core.style.opacity='.5'; halo.style.opacity='.08';
       lab.textContent='Closed';
-      if(cap) cap.textContent = nowF<OPEN ? 'opens 07:00' : 'closed for the day';
+      if(cap) cap.textContent = (nowF<OPEN ? 'opens 07:00' : 'closed for the day') + (sunHint ? ' · '+sunHint : '');
       return;
     }
 
     lab.textContent = hh+':'+mm;
-    if(cap) cap.textContent='now · '+hh+':'+mm+' in Hull';
+    if(cap) cap.textContent='now · '+hh+':'+mm+(sunHint ? ' · '+sunHint : ' · Hull');
 
     if(reduce || typeof gsap==='undefined'){
       placeSun(nowF); setElapsed(nowF);
@@ -1519,14 +1656,34 @@ button.cell:focus-visible{ outline:2px solid var(--marigold); outline-offset:2px
     openPay();
   });
 
+  /* \u2500\u2500 confirmation modal \u2500\u2500 */
+  var bookModal=document.getElementById('book-modal'),
+      bookModalBody=document.getElementById('book-modal-body'),
+      bookModalCard=document.getElementById('book-modal-card'),
+      bookModalClose=document.getElementById('book-modal-close'),
+      bookModalBackdrop=document.getElementById('book-modal-backdrop');
+  var lastFocusEl=null;
+  function closeBookModal(){ if(!bookModal || bookModal.hidden) return; bookModal.hidden=true; if(lastFocusEl && document.contains(lastFocusEl)) lastFocusEl.focus({preventScroll:true}); }
+  function openBookModal(){ if(!bookModal) return; lastFocusEl=document.activeElement; bookModal.hidden=false; (bookModalClose||bookModalCard).focus({preventScroll:true}); }
+  if(bookModalClose) bookModalClose.addEventListener('click', closeBookModal);
+  if(bookModalBackdrop) bookModalBackdrop.addEventListener('click', closeBookModal);
+  document.addEventListener('keydown', function(e){
+    if(bookModal && !bookModal.hidden && e.key==='Escape') closeBookModal();
+    if(bookModal && !bookModal.hidden && e.key==='Tab' && bookModalCard){
+      var f=bookModalCard.querySelectorAll('a[href],button:not([disabled]),input,[tabindex]:not([tabindex="-1"])');
+      if(!f.length) return; var first=f[0], last=f[f.length-1];
+      if(e.shiftKey && document.activeElement===first){ e.preventDefault(); last.focus(); }
+      else if(!e.shiftKey && document.activeElement===last){ e.preventDefault(); first.focus(); }
+    }
+  });
+
   function esc(v){ return String(v).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
   function renderPending(p){
-    var box=document.getElementById('booking');
-    if(box){
-      box.innerHTML=
+    if(bookModalBody){
+      bookModalBody.innerHTML=
         '<div class="booked">'+
           '<span class="booked-k">Awaiting payment</span>'+
-          '<h3>Thanks, '+esc(p.name)+'. <em>Almost there.</em></h3>'+
+          '<h3 id="book-modal-title">Thanks, '+esc(p.name)+'. <em>Almost there.</em></h3>'+
           '<p>We\u2019ve let the studio know to look out for your transfer. The moment it clears \u2014 usually the same working day \u2014 your door code lands by email at <strong>'+esc(p.email)+'</strong>. Nothing\u2019s confirmed until that email arrives.</p>'+
           '<dl class="booked-meta">'+
             '<div><dt>Slot</dt><dd>'+p.day+' \u00b7 '+p.start+'\u2013'+p.end+'</dd></div>'+
@@ -1535,8 +1692,8 @@ button.cell:focus-visible{ outline:2px solid var(--marigold); outline-offset:2px
           '</dl>'+
           '<p class="booked-fine">Haven\u2019t sent it yet? Transfer '+money(p.price)+' with reference '+p.ref+'. Something to ask first? <a href="mailto:hello@studioone.room?subject='+encodeURIComponent('Booking '+p.ref+' \u2014 StudioONE')+'">Message the studio</a>.</p>'+
         '</div>';
+      openBookModal();
     }
-    var bact=document.querySelector('.bact'); if(bact) bact.hidden=true;
     if(summary) summary.innerHTML='<span class="empty">Payment flagged \u2014 your code will be emailed once it clears.</span>';
     if(live) live.textContent='Payment flagged. Reference '+p.ref+'. Your door code will be emailed to '+p.email+' once it clears.';
   }
@@ -1547,7 +1704,15 @@ button.cell:focus-visible{ outline:2px solid var(--marigold); outline-offset:2px
     var payload={ name:nameInput.value.trim(), email:emailInput.value.trim(), ref:payRef,
                   day:dayLabel(sel.dayIdx), start:hourLabel(sel.start), end:hourLabel(sel.end), hours:hours, price:priceFor(hours) };
     payBtn.setAttribute('aria-disabled','true'); payBtn.innerHTML='Sending\u2026';
-    StudioOne.Booking.create(payload).then(function(){ renderPending(payload); });
+    StudioOne.Booking.create(payload).then(function(){
+      renderPending(payload);
+      // restore the picker beneath the modal for a fresh booking
+      payBtn.innerHTML='I\u2019ve sent the payment <span class="ar" aria-hidden="true">\u2192</span>';
+      if(nameInput) nameInput.value=''; if(emailInput) emailInput.value='';
+      closePay();
+      if(confirmBtn) confirmBtn.innerHTML='Continue to payment <span class="ar" aria-hidden="true">\u2192</span>';
+      summarize();
+    });
   });
 
   /* ════ boot: one fetch feeds the picker and the day-arc ════ */

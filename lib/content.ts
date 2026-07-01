@@ -32,7 +32,17 @@ export const contentSchema = z
         themeColor: z.string(),
       })
       .strict(),
-    brand: z.object({ lead: z.string(), mark: z.string() }).strict(),
+    brand: z
+      .object({
+        lead: z.string(),
+        mark: z.string(),
+        // Optional site-wide logo (PNG/SVG). When set it replaces the text
+        // wordmark in the topbar + footer. Optional so pre-existing content
+        // (seeded before the logo field existed) still validates.
+        logoUrl: z.string().optional(),
+        logoAlt: z.string().optional(),
+      })
+      .strict(),
     hero: z
       .object({
         titleLines: z.array(z.string()), // rich

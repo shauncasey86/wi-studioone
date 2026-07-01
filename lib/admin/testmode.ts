@@ -36,6 +36,7 @@ type Snapshot = {
   howSteps: unknown[];
   policies: unknown[];
   roomFacts: unknown[];
+  roomPhotos: unknown[];
   changeoverItems: unknown[];
   navItems: unknown[];
   footerColumns: unknown[];
@@ -53,6 +54,7 @@ async function capture(): Promise<Snapshot> {
     howSteps,
     policies,
     roomFacts,
+    roomPhotos,
     changeoverItems,
     navItems,
     footerColumns,
@@ -73,6 +75,9 @@ async function capture(): Promise<Snapshot> {
     }),
     prisma.roomFact.findMany({
       select: { order: true, strong: true, text: true },
+    }),
+    prisma.roomPhoto.findMany({
+      select: { order: true, url: true, alt: true },
     }),
     prisma.changeoverItem.findMany({ select: { order: true, text: true } }),
     prisma.navItem.findMany({
@@ -115,6 +120,7 @@ async function capture(): Promise<Snapshot> {
     howSteps,
     policies,
     roomFacts,
+    roomPhotos,
     changeoverItems,
     navItems,
     footerColumns,
@@ -166,6 +172,7 @@ export async function exitTestMode() {
       await tx.howStep.deleteMany();
       await tx.policy.deleteMany();
       await tx.roomFact.deleteMany();
+      await tx.roomPhoto.deleteMany();
       await tx.changeoverItem.deleteMany();
       await tx.navItem.deleteMany();
       await tx.footerColumn.deleteMany();
@@ -191,6 +198,10 @@ export async function exitTestMode() {
       if (snap.roomFacts.length)
         await tx.roomFact.createMany({
           data: as<Prisma.RoomFactCreateManyInput>(snap.roomFacts),
+        });
+      if (snap.roomPhotos.length)
+        await tx.roomPhoto.createMany({
+          data: as<Prisma.RoomPhotoCreateManyInput>(snap.roomPhotos),
         });
       if (snap.changeoverItems.length)
         await tx.changeoverItem.createMany({

@@ -60,15 +60,17 @@ export default async function Practical() {
 
           <div className="rates-strip">
             <span className="rates-h">{practical.rates.header}</span>
-            <ul className="rates">
-              {rateTiers.map((t) => (
-                <li key={t.hours}>
-                  {`${t.hours}h `}
-                  <b>{`£${t.price}`}</b>
-                </li>
-              ))}
-            </ul>
-            <p className="rates-note">{rich(practical.rates.note)}</p>
+            <div className="rates-body">
+              <ul className="rates">
+                {rateTiers.map((t) => (
+                  <li key={t.hours}>
+                    {`${t.hours}h `}
+                    <b>{`£${t.price}`}</b>
+                  </li>
+                ))}
+              </ul>
+              <p className="rates-note">{rich(practical.rates.note)}</p>
+            </div>
           </div>
 
           <div className="policy-grid">

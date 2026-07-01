@@ -17,6 +17,16 @@ export const CONTENT_GROUPS: Group[] = [
     fields: [
       { path: "brand.lead", label: "Lead (e.g. Studio)", kind: "text" },
       { path: "brand.mark", label: "Mark (e.g. ONE)", kind: "text" },
+      {
+        path: "brand.logoUrl",
+        label: "Logo (PNG/SVG — replaces the text wordmark when set)",
+        kind: "image",
+      },
+      {
+        path: "brand.logoAlt",
+        label: "Logo alt text",
+        kind: "text",
+      },
     ],
   },
   {

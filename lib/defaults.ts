@@ -26,7 +26,7 @@ export const defaultContent = {
       "A bare, daylit room in Sutton Village, Hull. £45 the first hour, less for each after, one-hour minimum. Code by email once payment clears.",
     themeColor: "#221a13",
   },
-  brand: { lead: "Studio", mark: "ONE" },
+  brand: { lead: "Studio", mark: "ONE", logoUrl: "", logoAlt: "" },
   hero: {
     titleLines: ["A room", "kept by", "the *hour.*"],
     sub: "Forty square metres, bare and daylit. Booked by the hour, up to eight at a time. Pay by transfer; the door code lands by email once it clears.",
@@ -212,6 +212,23 @@ export const defaultRoomFacts = [
   { strong: "Free", text: " on-street parking" },
 ];
 
+// Photos of the building/room, shown in the §03 room band. Seeded with daylit
+// room stock so the section renders out of the box; replace from the admin.
+export const defaultRoomPhotos = [
+  {
+    url: "https://images.unsplash.com/photo-1722604819704-78b6d9c26ea9?auto=format&fit=crop&w=900&h=1100&q=80&crop=entropy",
+    alt: "The room — empty, daylit, oak floor, lime-plaster walls.",
+  },
+  {
+    url: "https://images.unsplash.com/photo-1722604819704-78b6d9c26ea9?auto=format&fit=crop&w=900&h=1100&q=80&crop=edges",
+    alt: "Morning light across the bare boards.",
+  },
+  {
+    url: "https://images.unsplash.com/photo-1722604819704-78b6d9c26ea9?auto=format&fit=crop&w=900&h=1100&q=80&crop=top",
+    alt: "The room set for the day ahead.",
+  },
+];
+
 export const defaultChangeoverItems = [
   "Floors swept & mopped",
   "Surfaces wiped down",
@@ -294,6 +311,7 @@ export const listDefaults: Record<string, Record<string, unknown>[]> = {
   kinds: defaultKinds.map((k, order) => ({ ...k, order })),
   howSteps: defaultHowSteps.map((s, order) => ({ ...s, order })),
   roomFacts: defaultRoomFacts.map((f, order) => ({ ...f, order })),
+  roomPhotos: defaultRoomPhotos.map((p, order) => ({ ...p, order })),
   changeoverItems: defaultChangeoverItems.map((text, order) => ({
     text,
     order,
