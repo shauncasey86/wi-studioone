@@ -7,8 +7,10 @@ import {
   moveListItem,
 } from "@/lib/admin/actions";
 import { resetList } from "@/lib/admin/reset";
+import { requireCapability } from "@/lib/session";
 import RichField from "@/components/admin/RichField";
 import ImageField from "@/components/admin/ImageField";
+import PageHeader from "@/components/admin/PageHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +27,7 @@ function fieldValue(item: Item, field: ListField): string {
 }
 
 export default async function ListsPage() {
+  await requireCapability("lists");
   const data = await getSiteData();
   const itemsByKey: Record<string, Item[]> = {
     navItems: data.navItems,
@@ -41,11 +44,15 @@ export default async function ListsPage() {
 
   return (
     <>
-      <h1>Lists</h1>
-      <p className="muted">
-        Add, edit, remove and reorder every repeatable list. Saving updates the
-        live site immediately.
-      </p>
+      <PageHeader
+        eyebrow="Content"
+        title={
+          <>
+            The <em>lists.</em>
+          </>
+        }
+        lede="Add, edit, remove and reorder every repeatable list. Saving updates the live site immediately."
+      />
 
       {Object.entries(LISTS).map(([key, cfg]) => {
         const items = itemsByKey[key] ?? [];

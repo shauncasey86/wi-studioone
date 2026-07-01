@@ -48,18 +48,30 @@ npm test                    # vitest
 
 ## Admin
 
-Sign in at **`/admin`** with `ADMIN_EMAIL` / `ADMIN_PASSWORD`. From there you can:
+Sign in at **`/admin`** with `ADMIN_EMAIL` / `ADMIN_PASSWORD`. The admin has a
+grouped sidebar (Operations · Content · Configuration) and a dashboard that
+opens on what needs doing — pending confirmations, who's in today, the week
+ahead. From there you can:
 
-- **Content / Lists / Pricing / Settings** — edit every section, add/remove/
-  reorder lists, set rate tiers + rules, BACS, door code, map, contact, emails.
 - **Bookings** — confirm a paid booking (emails the guest their door code),
   cancel (frees the slot), resend the code; four-week overview.
 - **Blocks / Holds** — one-off blocks and weekly recurring holds; both subtract
   from availability.
-- **Testing mode** (dashboard) — turn on to trial every feature end to end; a
-  banner shows on the public site. Turning it off **restores the content and
-  deletes any bookings made during the test** (snapshot-on-enter, restore-on-
-  exit). Emails still send while testing so you can verify them.
+- **Opening hours** — the open/close times plus the booking-window rules
+  (min/max length, changeover buffer, days ahead, hold expiry).
+- **Content / Lists / Pricing / Settings** — edit every section, add/remove/
+  reorder lists, set rate tiers, BACS, door code, map, contact, emails.
+- **Team** — add or remove **sub-admins**. A sub-admin can manage bookings,
+  blocks, holds, opening hours and pricing (everything to run the diary day to
+  day) but not site content, settings, testing mode or the team. Roles are
+  enforced
+  server-side on every page and mutation; the sidebar only shows what a role can
+  reach. The owner (seeded from `ADMIN_EMAIL`) always has full access and can't
+  be removed from the UI.
+- **Testing mode** (dashboard, owner only) — turn on to trial every feature end
+  to end; a banner shows on the public site. Turning it off **restores the
+  content and deletes any bookings made during the test** (snapshot-on-enter,
+  restore-on-exit). Emails still send while testing so you can verify them.
 
 ## Booking flow (BACS)
 

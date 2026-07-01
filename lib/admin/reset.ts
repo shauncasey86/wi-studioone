@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/session";
+import { requireCapability } from "@/lib/session";
 import { contentSchema } from "@/lib/content";
 import { CONTENT_GROUPS, getPath, setPath } from "@/lib/admin/content-fields";
 import { LISTS } from "@/lib/admin/lists-config";
@@ -40,7 +40,7 @@ async function rebuildList(tx: Prisma.TransactionClient, listKey: string) {
 // Reset one content section to its default copy, leaving every other section's
 // edits untouched. groupKey is a CONTENT_GROUPS key.
 export async function resetContentSection(groupKey: string) {
-  await requireAdmin();
+  await requireCapability("testmode");
   const group = CONTENT_GROUPS.find((g) => g.key === groupKey);
   if (!group) throw new Error(`Unknown content section: ${groupKey}`);
   const settings = await prisma.siteSettings.findUniqueOrThrow({
@@ -61,7 +61,7 @@ export async function resetContentSection(groupKey: string) {
 
 // Reset one reorderable list to its default rows.
 export async function resetList(listKey: string) {
-  await requireAdmin();
+  await requireCapability("testmode");
   await prisma.$transaction((tx) => rebuildList(tx, listKey));
   revalidatePath("/");
   revalidatePath("/admin/lists");
@@ -69,7 +69,7 @@ export async function resetList(listKey: string) {
 
 // Reset every content section and every list to defaults in one go.
 export async function resetEverything() {
-  await requireAdmin();
+  await requireCapability("testmode");
   const parsed = contentSchema.parse(defaultContent);
   await prisma.$transaction(async (tx) => {
     await tx.siteSettings.update({

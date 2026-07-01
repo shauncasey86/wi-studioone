@@ -171,9 +171,19 @@ model RecurringHold {
   label     String?
 }
 
+// The owner (seeded from ADMIN_EMAIL) has full access. Sub-admins are created
+// from the Team page and are scoped to bookings + opening hours (lib/admin/
+// permissions.ts). Role gates every admin page and mutation server-side.
+enum Role {
+  OWNER
+  SUBADMIN
+}
+
 model AdminUser {
   id           String   @id @default(cuid())
   email        String   @unique
+  name         String?
   passwordHash String
+  role         Role     @default(OWNER)
   createdAt    DateTime @default(now())
 }

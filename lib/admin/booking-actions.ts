@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/session";
+import { requireCapability } from "@/lib/session";
 import { contactSchema } from "@/lib/content";
 import { sendDoorCode } from "@/lib/email";
 import { isoOf, hhmm, dateKey } from "@/lib/booking/time";
@@ -48,7 +48,7 @@ async function emailDoorCode(bookingId: string) {
 }
 
 export async function confirmBooking(id: string) {
-  await requireAdmin();
+  await requireCapability("bookings");
   const booking = await prisma.booking.findUnique({ where: { id } });
   if (!booking || booking.status !== "PENDING") return;
   await prisma.booking.update({
@@ -64,7 +64,7 @@ export async function confirmBooking(id: string) {
 }
 
 export async function cancelBooking(id: string) {
-  await requireAdmin();
+  await requireCapability("bookings");
   const booking = await prisma.booking.findUnique({ where: { id } });
   if (!booking || booking.status === "CANCELLED") return;
   await prisma.booking.update({
@@ -75,7 +75,7 @@ export async function cancelBooking(id: string) {
 }
 
 export async function resendDoorCode(id: string) {
-  await requireAdmin();
+  await requireCapability("bookings");
   const booking = await prisma.booking.findUnique({ where: { id } });
   if (!booking || booking.status !== "CONFIRMED") return;
   await emailDoorCode(id);
@@ -88,7 +88,7 @@ export async function resendDoorCode(id: string) {
 
 // ── one-off blocks ──
 export async function createBlock(formData: FormData) {
-  await requireAdmin();
+  await requireCapability("bookings");
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(
     String(formData.get("date") || ""),
   );
@@ -114,7 +114,7 @@ export async function createBlock(formData: FormData) {
 }
 
 export async function deleteBlock(id: string) {
-  await requireAdmin();
+  await requireCapability("bookings");
   await prisma.block.delete({ where: { id } });
   revalidatePath("/admin/blocks");
   revalidatePath("/");
@@ -122,7 +122,7 @@ export async function deleteBlock(id: string) {
 
 // ── weekly recurring holds ──
 export async function createHold(formData: FormData) {
-  await requireAdmin();
+  await requireCapability("bookings");
   const weekday = parseInt(String(formData.get("weekday")), 10);
   const startHour = parseInt(String(formData.get("startHour")), 10);
   const endHour = parseInt(String(formData.get("endHour")), 10);
@@ -148,7 +148,7 @@ export async function createHold(formData: FormData) {
 }
 
 export async function deleteHold(id: string) {
-  await requireAdmin();
+  await requireCapability("bookings");
   await prisma.recurringHold.delete({ where: { id } });
   revalidatePath("/admin/holds");
   revalidatePath("/");

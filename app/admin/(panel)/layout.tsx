@@ -1,10 +1,43 @@
-import Link from "next/link";
 import "../admin.css";
-import { requireAdmin } from "@/lib/session";
-import { logout } from "@/lib/admin/actions";
+import { requireAdmin, sessionRole } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
+import { can, roleLabel, type Capability } from "@/lib/admin/permissions";
+import AdminNav, { type NavGroup } from "@/components/admin/AdminNav";
 
 export const dynamic = "force-dynamic";
+
+// The nav, expressed once as capability-tagged items. The layout filters it by
+// the signed-in role so a sub-admin simply never sees owner-only sections.
+const NAV: {
+  title: string;
+  items: { href: string; label: string; cap?: Capability }[];
+}[] = [
+  {
+    title: "Operations",
+    items: [
+      { href: "/admin", label: "Dashboard" },
+      { href: "/admin/bookings", label: "Bookings", cap: "bookings" },
+      { href: "/admin/blocks", label: "Blocks", cap: "bookings" },
+      { href: "/admin/holds", label: "Holds", cap: "bookings" },
+      { href: "/admin/hours", label: "Opening hours", cap: "hours" },
+    ],
+  },
+  {
+    title: "Content",
+    items: [
+      { href: "/admin/content", label: "Content", cap: "content" },
+      { href: "/admin/lists", label: "Lists", cap: "lists" },
+    ],
+  },
+  {
+    title: "Configuration",
+    items: [
+      { href: "/admin/pricing", label: "Pricing", cap: "pricing" },
+      { href: "/admin/settings", label: "Settings", cap: "settings" },
+      { href: "/admin/team", label: "Team", cap: "team" },
+    ],
+  },
+];
 
 export default async function PanelLayout({
   children,
@@ -12,45 +45,46 @@ export default async function PanelLayout({
   children: React.ReactNode;
 }) {
   const session = await requireAdmin();
-  const settings = await prisma.siteSettings.findUnique({
-    where: { id: 1 },
-    select: { testMode: true },
-  });
+  const role = sessionRole(session);
+
+  const [settings, user] = await Promise.all([
+    prisma.siteSettings.findUnique({
+      where: { id: 1 },
+      select: { testMode: true },
+    }),
+    session.userId
+      ? prisma.adminUser.findUnique({
+          where: { id: session.userId },
+          select: { name: true, email: true },
+        })
+      : null,
+  ]);
+
+  const groups: NavGroup[] = NAV.map((g) => ({
+    title: g.title,
+    items: g.items
+      .filter((i) => !i.cap || can(role, i.cap))
+      .map(({ href, label }) => ({ href, label })),
+  })).filter((g) => g.items.length > 0);
+
   return (
     <div className="admin">
-      <header className="admin-bar">
-        <span className="brand">
-          Studio<span className="hr">ONE</span>
-        </span>
-        <span className="tag">admin</span>
-        {settings?.testMode && (
-          <span
-            className="tag"
-            style={{ color: "var(--marigold)", fontWeight: 700 }}
-          >
-            ● Testing mode
-          </span>
-        )}
-        <nav>
-          <Link href="/admin">Dashboard</Link>
-          <Link href="/admin/bookings">Bookings</Link>
-          <Link href="/admin/blocks">Blocks</Link>
-          <Link href="/admin/holds">Holds</Link>
-          <Link href="/admin/content">Content</Link>
-          <Link href="/admin/lists">Lists</Link>
-          <Link href="/admin/pricing">Pricing &amp; rules</Link>
-          <Link href="/admin/settings">Settings</Link>
-          <a href="/" target="_blank" rel="noopener noreferrer">
-            View site ↗
-          </a>
-        </nav>
-        <form action={logout}>
-          <button className="btn ghost" type="submit">
-            Sign out ({session.email})
-          </button>
-        </form>
-      </header>
-      <main className="admin-main">{children}</main>
+      <a className="admin-skip" href="#admin-content">
+        Skip to content
+      </a>
+      <div className="admin-shell">
+        <AdminNav
+          groups={groups}
+          user={{
+            label: user?.name || user?.email || session.email || "Signed in",
+            role: roleLabel(role),
+          }}
+          testMode={settings?.testMode ?? false}
+        />
+        <main className="admin-main" id="admin-content">
+          {children}
+        </main>
+      </div>
     </div>
   );
 }

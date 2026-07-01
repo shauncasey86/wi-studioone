@@ -1,13 +1,16 @@
 import { getSiteData } from "@/lib/site-data";
 import { saveContent } from "@/lib/admin/actions";
 import { resetContentSection } from "@/lib/admin/reset";
+import { requireCapability } from "@/lib/session";
 import { CONTENT_GROUPS, getPath } from "@/lib/admin/content-fields";
 import RichField from "@/components/admin/RichField";
 import ImageField from "@/components/admin/ImageField";
+import PageHeader from "@/components/admin/PageHeader";
 
 export const dynamic = "force-dynamic";
 
 export default async function ContentPage() {
+  await requireCapability("content");
   const { content } = await getSiteData();
 
   const valueOf = (path: string, kind: string): string => {
@@ -18,10 +21,15 @@ export default async function ContentPage() {
 
   return (
     <>
-      <h1>Content</h1>
-      <p className="muted">
-        All site copy, by section. Saving updates the live site immediately.
-      </p>
+      <PageHeader
+        eyebrow="Content"
+        title={
+          <>
+            The <em>copy.</em>
+          </>
+        }
+        lede="Every word the public site renders, by section. Saving updates the live site immediately."
+      />
 
       <form action={saveContent}>
         {CONTENT_GROUPS.map((group) => (
