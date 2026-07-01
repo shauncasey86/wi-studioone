@@ -35,6 +35,14 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // Server Actions default to a 1 MB request body, which rejects image uploads
+  // before they reach uploadMedia (which itself caps files at 5 MB). Raise the
+  // limit to 6 MB so a full 5 MB image fits with multipart encoding overhead.
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "6mb",
+    },
+  },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
