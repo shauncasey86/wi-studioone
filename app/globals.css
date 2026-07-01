@@ -436,13 +436,8 @@ button.cell:focus-visible{ outline:2px solid var(--marigold); outline-offset:2px
 .time[aria-pressed="true"]{ background:var(--marigold); border-color:var(--marigold); color:var(--umber-3); font-weight:700; }
 .times-empty{ font-family:var(--serif); font-style:italic; font-size:1.05rem; line-height:1.5; color:var(--oat-dim); max-width:46ch; }
 
-/* step 3 — length: common presets + an hourly stepper */
+/* step 3 — length: an hourly stepper (minus / read-out / plus) */
 .length{ display:grid; gap:1.3rem; }
-.presets{ display:flex; flex-wrap:wrap; gap:.5rem; }
-.preset{ appearance:none; -webkit-appearance:none; font-family:var(--mono); font-size:.68rem; letter-spacing:.12em; text-transform:uppercase; min-height:44px; padding:.7rem 1.15rem; color:var(--oat-dim); background:transparent; border:1px solid rgba(236,228,211,.24); cursor:pointer; transition:background .2s ease, border-color .2s ease, color .2s ease; }
-.preset:hover{ color:var(--paper); border-color:var(--paper); }
-.preset:focus-visible{ outline:2px solid var(--marigold); outline-offset:2px; }
-.preset[aria-pressed="true"]{ background:var(--marigold); border-color:var(--marigold); color:var(--umber-3); }
 .stepper{ display:flex; align-items:center; gap:1.1rem; max-width:460px; }
 .lstep{ appearance:none; -webkit-appearance:none; width:54px; height:54px; flex:0 0 auto; display:grid; place-items:center; font-family:var(--serif); font-size:1.9rem; line-height:1; color:var(--paper); border:1px solid rgba(236,228,211,.3); background:rgba(236,228,211,.04); border-radius:50%; cursor:pointer; transition:background .2s ease, border-color .2s ease, opacity .2s ease; }
 .lstep:hover{ background:var(--glow); border-color:var(--marigold); }
@@ -451,8 +446,6 @@ button.cell:focus-visible{ outline:2px solid var(--marigold); outline-offset:2px
 .lread{ flex:1; display:grid; gap:.25rem; }
 .lspan{ font-family:var(--serif); font-weight:420; font-size:clamp(1.5rem,2.4vw,1.9rem); letter-spacing:-.01em; color:var(--paper); font-variation-settings:"opsz" 32; }
 .lmeta{ font-family:var(--mono); font-size:.64rem; letter-spacing:.1em; text-transform:uppercase; color:var(--oat-dim); }
-.preset .pp{ margin-left:.2rem; color:var(--paper); }
-.preset[aria-pressed="true"] .pp{ color:var(--umber-3); }
 .len-note{ font-family:var(--mono); font-size:.66rem; line-height:1.65; letter-spacing:.04em; color:var(--oat-quiet); max-width:44ch; }
 .len-note[hidden]{ display:none; }
 .len-note a{ color:var(--marigold); border-bottom:1px solid rgba(217,131,36,.4); padding-bottom:1px; transition:border-color .2s ease; }
@@ -500,7 +493,6 @@ button.cell:focus-visible{ outline:2px solid var(--marigold); outline-offset:2px
    readable rather than a tiny mono footnote. */
 .pay-note{ font-family:var(--serif); font-weight:360; font-size:1.02rem; line-height:1.6; color:var(--oat-dim); max-width:58ch; font-variation-settings:"opsz" 24; }
 .pay-note strong{ color:var(--paper); font-weight:480; }
-.len-hint{ font-family:var(--mono); font-size:.64rem; line-height:1.6; letter-spacing:.04em; color:var(--oat-quiet); max-width:48ch; }
 .pay-btn{ justify-self:start; }
 
 /* confirmation modal — shown once a reservation is placed */
@@ -530,11 +522,14 @@ button.cell:focus-visible{ outline:2px solid var(--marigold); outline-offset:2px
 .booked-fine{ font-family:var(--mono); font-size:.68rem; line-height:1.7; letter-spacing:.03em; color:var(--oat-quiet); }
 .booked-fine a{ color:var(--marigold); border-bottom:1px solid rgba(217,131,36,.4); padding-bottom:1px; }
 .booked-fine a:hover{ border-bottom-color:var(--marigold); }
+/* compact confirmation body — tuned so the modal never needs to scroll */
+.booked--modal{ padding:clamp(1.3rem,3vw,1.9rem) clamp(1.3rem,3vw,1.9rem); gap:.9rem; }
+.booked--modal h3{ font-size:clamp(1.7rem,3.2vw,2.3rem); line-height:1.02; }
+.booked--modal > p{ font-size:1rem; line-height:1.45; max-width:52ch; }
 /* the bank-transfer panel inside the confirmation modal (reuses .bacs) */
-.modal-bacs{ margin:0; }
-/* the one instruction that must read clearly — serif, not a mono footnote */
-.pay-instruct{ font-family:var(--serif); font-weight:380; font-size:1.05rem; line-height:1.55; color:var(--paper); font-variation-settings:"opsz" 24; }
-.pay-instruct strong{ color:var(--marigold); font-weight:520; white-space:nowrap; }
+.modal-bacs{ margin:0; padding:clamp(1rem,2vw,1.25rem); }
+.modal-bacs .bacs-h{ margin-bottom:.7rem; }
+.modal-bacs .bacs-row{ padding:.42rem 0; }
 .modal-actions{ display:flex; flex-wrap:wrap; gap:.7rem; align-items:center; }
 .modal-actions .btn{ flex:1 1 auto; justify-content:center; }
 .modal-actions .ghost{ flex:0 0 auto; }

@@ -215,6 +215,49 @@ export async function sendStudioAlert(b: {
 }
 
 /**
+ * Guest "we've got it" receipt, sent the moment the guest says they've paid
+ * (RESERVED→PENDING). Reassures them the booking is provisionally held while the
+ * studio checks the transfer, and that the door code follows once it clears.
+ */
+export async function sendPendingReceipt(o: {
+  to: string;
+  name: string;
+  day: string;
+  start: string;
+  end: string;
+  amountPence: number;
+  reference: string;
+  replyTo?: string;
+}): Promise<void> {
+  const amount = `£${(o.amountPence / 100).toFixed(0)}`;
+  const bodyHtml =
+    paragraph(
+      `Thanks ${escapeHtml(
+        o.name,
+      )} — we've got your booking and we're checking for your payment now, usually the same working day.`,
+    ) +
+    metaPanel("Provisionally booked", [
+      { label: "When", value: `${o.day} · ${o.start}–${o.end}` },
+      { label: "Reference", value: o.reference, accent: true },
+      { label: "Amount", value: amount, big: true, accent: true },
+    ]) +
+    paragraph(
+      "Your slot is held. The moment the transfer clears, your door code lands by email — nothing more for you to do. Just reply here if anything's changed.",
+    );
+  await send({
+    to: [o.to],
+    subject: `We've got your booking — StudioONE · ${o.day} ${o.start}–${o.end}`,
+    html: emailShell({
+      preheader: `Provisionally booked for ${o.day} ${o.start}–${o.end} — checking your payment.`,
+      kicker: "Booking received",
+      heading: "We've got your booking",
+      bodyHtml,
+    }),
+    replyTo: o.replyTo,
+  });
+}
+
+/**
  * Guest door-code email, sent when the studio confirms payment. Carries the
  * confirmed slot, the current door code, the address + access notes, and a
  * reply-to support line. Sent only to the guest — never to a public surface.
