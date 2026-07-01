@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { bookingInputSchema } from "@/lib/booking/schema";
-import { createPendingBooking } from "@/lib/booking/service";
+import { createReservation } from "@/lib/booking/service";
 import { rateLimit } from "@/lib/auth";
-import { sendStudioAlert } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -34,7 +33,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, reference: "—" });
   }
 
-  const result = await createPendingBooking({
+  const result = await createReservation({
     name: parsed.data.name,
     email: parsed.data.email,
     dateISO: parsed.data.dateISO,
@@ -47,23 +46,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: result.error }, { status });
   }
 
-  // Alert the studio (never includes the door code). Don't fail the booking if
-  // email errors — the row is already created.
-  try {
-    await sendStudioAlert({
-      name: parsed.data.name,
-      email: parsed.data.email,
-      day: result.day,
-      start: result.start,
-      end: result.end,
-      hours: parsed.data.hours,
-      amountPence: result.amountPence,
-      reference: result.reference,
-    });
-  } catch (e) {
-    console.error("[bookings] studio alert failed", e);
-  }
-
+  // The slot is now held. The studio is NOT alerted yet — that happens once the
+  // guest confirms they've sent the transfer (POST /api/bookings/claim).
   return NextResponse.json({
     ok: true,
     reference: result.reference,

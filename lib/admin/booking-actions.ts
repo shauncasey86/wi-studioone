@@ -5,7 +5,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireCapability } from "@/lib/session";
 import { contactSchema } from "@/lib/content";
-import { sendDoorCode } from "@/lib/email";
+import { sendDoorCode, sendCancellation } from "@/lib/email";
 import { isoOf, hhmm, dateKey } from "@/lib/booking/time";
 
 function revalidateBookings() {
@@ -50,7 +50,13 @@ async function emailDoorCode(bookingId: string) {
 export async function confirmBooking(id: string) {
   await requireCapability("bookings");
   const booking = await prisma.booking.findUnique({ where: { id } });
-  if (!booking || booking.status !== "PENDING") return;
+  // Confirm a booking the guest has claimed payment on (PENDING), or override a
+  // still-held reservation if the studio has already seen the transfer land.
+  if (
+    !booking ||
+    (booking.status !== "PENDING" && booking.status !== "RESERVED")
+  )
+    return;
   await prisma.booking.update({
     where: { id },
     data: {
@@ -67,10 +73,30 @@ export async function cancelBooking(id: string) {
   await requireCapability("bookings");
   const booking = await prisma.booking.findUnique({ where: { id } });
   if (!booking || booking.status === "CANCELLED") return;
+  const wasConfirmed = booking.status === "CONFIRMED";
   await prisma.booking.update({
     where: { id },
     data: { status: "CANCELLED", cancelledAt: new Date() },
   });
+  // Let the guest know their slot was released (don't fail the cancel on email).
+  try {
+    const settings = await prisma.siteSettings.findUniqueOrThrow({
+      where: { id: 1 },
+    });
+    const contact = contactSchema.safeParse(settings.contact);
+    await sendCancellation({
+      to: booking.email,
+      name: booking.name,
+      day: isoOf(booking.date),
+      start: hhmm(booking.startHour),
+      end: hhmm(booking.endHour),
+      reference: booking.reference,
+      wasConfirmed,
+      replyTo: contact.success ? contact.data.email : undefined,
+    });
+  } catch (e) {
+    console.error("[bookings] cancellation email failed", e);
+  }
   revalidateBookings();
 }
 

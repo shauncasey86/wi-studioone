@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { createBooking, fetchAvailability } from "@/lib/availability";
+import {
+  createBooking,
+  fetchAvailability,
+  claimPayment,
+} from "@/lib/availability";
 
 /**
  * StudioONE — booking diary, a faithful port of the calendar logic in
@@ -150,7 +154,6 @@ export default function BookingDiary({ config }: { config: DiaryConfig }) {
     const stepPay = $("step-pay"),
       nameInput = $("bk-name") as HTMLInputElement | null,
       emailInput = $("bk-email") as HTMLInputElement | null,
-      bacsAmt = $("bacs-amt"),
       payBtn = $("pay-confirm");
 
     const ac = new AbortController();
@@ -550,8 +553,8 @@ export default function BookingDiary({ config }: { config: DiaryConfig }) {
       const hours = sel.end! - sel.start;
       if (lenSpan)
         lenSpan.textContent = hourLabel(sel.start) + "–" + hourLabel(sel.end!);
-      if (lenMeta)
-        lenMeta.textContent = dur(hours) + " · " + money(priceFor(hours));
+      // Price lives in the summary bar below — don't repeat it here.
+      if (lenMeta) lenMeta.textContent = dur(hours);
       if (lenMinus) lenMinus.disabled = sel.end! <= sel.start + MIN_RUN;
       if (lenPlus)
         lenPlus.disabled = sel.end! >= maxEnd(sel.dayIdx!, sel.start);
@@ -706,7 +709,6 @@ export default function BookingDiary({ config }: { config: DiaryConfig }) {
 
     const openPay = () => {
       if (sel.start === null) return;
-      if (bacsAmt) bacsAmt.textContent = money(priceFor(sel.end! - sel.start));
       if (stepPay) (stepPay as HTMLElement).hidden = false;
       if (confirmBtn) (confirmBtn as HTMLElement).hidden = true;
       refreshPay();
@@ -747,7 +749,15 @@ export default function BookingDiary({ config }: { config: DiaryConfig }) {
             }) as Record<string, string>
           )[c],
       );
-    const renderPending = (p: {
+    // Wire any [data-modal-dismiss] buttons in the current modal body to close.
+    const wireDismiss = () => {
+      if (!modalBody) return;
+      modalBody
+        .querySelectorAll<HTMLElement>("[data-modal-dismiss]")
+        .forEach((el) => el.addEventListener("click", closeModal, { signal }));
+    };
+
+    type Pending = {
       name: string;
       email: string;
       reference: string;
@@ -755,17 +765,66 @@ export default function BookingDiary({ config }: { config: DiaryConfig }) {
       start: string;
       end: string;
       price: number;
-    }) => {
+    };
+
+    // Second modal state: the guest has told us the payment is on its way.
+    const renderClaimed = (p: Pending) => {
+      if (!modalBody) return;
+      modalBody.innerHTML =
+        '<div class="booked">' +
+        '<span class="booked-k">Payment noted — thank you</span>' +
+        '<h3 id="book-modal-title">That’s with us now.</h3>' +
+        "<p>Thanks, " +
+        esc(p.name) +
+        ". We’ll check your transfer has landed — usually the same working day — and email your door code to <strong>" +
+        esc(p.email) +
+        "</strong>. Nothing more for you to do.</p>" +
+        '<dl class="booked-meta">' +
+        "<div><dt>Slot</dt><dd>" +
+        esc(p.day) +
+        " · " +
+        p.start +
+        "–" +
+        p.end +
+        "</dd></div>" +
+        '<div><dt>Reference</dt><dd class="mark">' +
+        esc(p.reference) +
+        "</dd></div>" +
+        "</dl>" +
+        '<div class="modal-actions">' +
+        '<button type="button" class="btn" data-modal-dismiss>Done</button>' +
+        "</div>" +
+        "</div>";
+      wireDismiss();
+      modalBody
+        .querySelector<HTMLElement>("[data-modal-dismiss]")
+        ?.focus({ preventScroll: true });
+      if (summary)
+        summary.innerHTML =
+          '<span class="empty">Payment noted — your code will be emailed once it clears.</span>';
+      if (live)
+        live.textContent =
+          "Payment noted. The studio will confirm your transfer and email your door code to " +
+          p.email +
+          ".";
+    };
+
+    const renderPending = (p: Pending) => {
       if (modalBody) {
+        const demo = config.bacs.demo
+          ? '<span class="demo">Demo details</span>'
+          : "";
         modalBody.innerHTML =
           '<div class="booked">' +
-          '<span class="booked-k">Awaiting payment</span>' +
+          '<span class="booked-k">Slot held — awaiting your payment</span>' +
           '<h3 id="book-modal-title">Thanks, ' +
           esc(p.name) +
           ". <em>Almost there.</em></h3>" +
-          "<p>We’ve let the studio know to look out for your transfer. The moment it clears — usually the same working day — your door code lands by email at <strong>" +
+          "<p>Your slot is held. Make the bank transfer below, then press " +
+          "<strong>I’ve sent the payment</strong> so the studio knows to look " +
+          "out for it. Your door code lands by email at <strong>" +
           esc(p.email) +
-          "</strong>. Nothing’s confirmed until that email arrives.</p>" +
+          "</strong> once it clears — usually the same working day.</p>" +
           '<dl class="booked-meta">' +
           "<div><dt>Slot</dt><dd>" +
           esc(p.day) +
@@ -774,49 +833,80 @@ export default function BookingDiary({ config }: { config: DiaryConfig }) {
           "–" +
           p.end +
           "</dd></div>" +
-          '<div><dt>Reference</dt><dd class="mark">' +
+          "</dl>" +
+          '<dl class="bacs modal-bacs">' +
+          '<div class="bacs-h"><span>Bank transfer</span>' +
+          demo +
+          "</div>" +
+          '<div class="bacs-row"><dt>Account name</dt><dd>' +
+          esc(config.bacs.accountName) +
+          "</dd></div>" +
+          '<div class="bacs-row"><dt>Sort code</dt><dd>' +
+          esc(config.bacs.sortCode) +
+          "</dd></div>" +
+          '<div class="bacs-row"><dt>Account no.</dt><dd>' +
+          esc(config.bacs.accountNo) +
+          "</dd></div>" +
+          '<div class="bacs-row ref"><dt>Reference</dt><dd>' +
           esc(p.reference) +
           "</dd></div>" +
-          '<div><dt>Amount</dt><dd class="mark">' +
+          '<div class="bacs-row amt"><dt>Amount</dt><dd>' +
           money(p.price) +
           "</dd></div>" +
           "</dl>" +
-          '<dl class="booked-meta">' +
-          "<div><dt>Account name</dt><dd>" +
-          esc(config.bacs.accountName) +
-          "</dd></div>" +
-          "<div><dt>Sort code</dt><dd>" +
-          esc(config.bacs.sortCode) +
-          "</dd></div>" +
-          "<div><dt>Account no.</dt><dd>" +
-          esc(config.bacs.accountNo) +
-          "</dd></div>" +
-          "</dl>" +
-          '<p class="booked-fine">Transfer <strong>' +
+          '<p class="pay-instruct">Send <strong>' +
           money(p.price) +
           "</strong> to the account above using reference <strong>" +
           esc(p.reference) +
-          "</strong> so we can match it. Something to ask first? " +
+          "</strong> — that’s how we match your payment to this booking.</p>" +
+          '<div class="modal-actions">' +
+          '<button type="button" class="btn" id="paid-confirm">I’ve sent the payment <span class="ar" aria-hidden="true">→</span></button>' +
+          '<button type="button" class="ghost" data-modal-dismiss>Close</button>' +
+          "</div>" +
+          '<p class="booked-fine">Something to ask first? ' +
           '<a href="mailto:hello@studioone.room?subject=' +
           encodeURIComponent("Booking " + p.reference + " — StudioONE") +
           '">Message the studio</a>.</p>' +
           "</div>";
+        wireDismiss();
+        const paidBtn =
+          modalBody.querySelector<HTMLButtonElement>("#paid-confirm");
+        if (paidBtn)
+          paidBtn.addEventListener(
+            "click",
+            () => {
+              if (paidBtn.getAttribute("aria-disabled") === "true") return;
+              paidBtn.setAttribute("aria-disabled", "true");
+              paidBtn.innerHTML = "Letting the studio know…";
+              claimPayment(p.reference).then((res) => {
+                if (res.ok) {
+                  renderClaimed(p);
+                } else {
+                  paidBtn.removeAttribute("aria-disabled");
+                  paidBtn.innerHTML =
+                    'I’ve sent the payment <span class="ar" aria-hidden="true">→</span>';
+                  if (live)
+                    live.textContent =
+                      "Sorry — we couldn’t record that just now. Please try again, or message the studio.";
+                }
+              });
+            },
+            { signal },
+          );
         openModal();
       }
       if (summary)
         summary.innerHTML =
-          '<span class="empty">Reserved — your code will be emailed once payment clears.</span>';
+          '<span class="empty">Slot held — send your transfer, then tell us it’s paid.</span>';
       if (live)
         live.textContent =
-          "Reserved. Reference " +
+          "Slot held. Reference " +
           p.reference +
           ". Transfer " +
           money(p.price) +
           " to " +
           config.bacs.accountName +
-          ". Your door code will be emailed to " +
-          p.email +
-          " once it clears.";
+          ", then press I’ve sent the payment.";
     };
 
     if (payBtn)
@@ -974,6 +1064,10 @@ export default function BookingDiary({ config }: { config: DiaryConfig }) {
                     role="group"
                     aria-label="Common lengths"
                   ></div>
+                  <p className="len-hint">
+                    Common lengths — or use −&nbsp;/&nbsp;+ below to book any
+                    number of hours, up to eight.
+                  </p>
                   <div className="stepper">
                     <button
                       type="button"
@@ -1011,9 +1105,9 @@ export default function BookingDiary({ config }: { config: DiaryConfig }) {
                 </div>
               </fieldset>
 
-              {/* step 4 — your details + bank transfer */}
+              {/* step 4 — your details (bank details come after reserving) */}
               <fieldset className="sblock" id="step-pay" hidden>
-                <legend className="sblock-h">Your details &amp; payment</legend>
+                <legend className="sblock-h">Your details</legend>
                 <div className="bfields">
                   <div className="bfield">
                     <label htmlFor="bk-name">Name</label>
@@ -1040,24 +1134,11 @@ export default function BookingDiary({ config }: { config: DiaryConfig }) {
                   </div>
                 </div>
                 <div className="pay">
-                  <dl className="bacs">
-                    <div className="bacs-h">
-                      <span>Pay by bank transfer</span>
-                      {config.bacs.demo ? (
-                        <span className="demo">Demo details</span>
-                      ) : null}
-                    </div>
-                    <div className="bacs-row amt">
-                      <dt>Amount</dt>
-                      <dd id="bacs-amt">—</dd>
-                    </div>
-                  </dl>
                   <p className="pay-note">
-                    Enter your name and email, then press reserve to hold the
-                    slot. Your <strong>reference</strong> and the bank details
-                    appear on the next screen — transfer the{" "}
-                    <strong>exact amount</strong> with that reference, and the
-                    door code is emailed once it clears.
+                    Enter your name and email, then <strong>reserve</strong> to
+                    hold your slot. Your reference and our bank details appear
+                    next — send the exact amount, tell us it&apos;s paid, and
+                    your door code is emailed the moment it clears.
                   </p>
                   <button
                     type="button"

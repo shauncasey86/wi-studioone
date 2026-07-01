@@ -52,3 +52,25 @@ export async function createBooking(
     return { ok: false, error: "network" };
   }
 }
+
+/**
+ * Tell the studio the guest has sent their bank transfer. This is what hands the
+ * held reservation over for confirmation — until it's called, the studio never
+ * sees the booking.
+ */
+export async function claimPayment(
+  reference: string,
+): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const res = await fetch("/api/bookings/claim", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reference }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) return { ok: false, error: data.error || "error" };
+    return { ok: true };
+  } catch {
+    return { ok: false, error: "network" };
+  }
+}

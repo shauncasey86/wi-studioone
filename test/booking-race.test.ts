@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterAll } from "vitest";
-import { createPendingBooking } from "@/lib/booking/service";
+import { createReservation } from "@/lib/booking/service";
 import { prisma } from "@/lib/prisma";
 import { todayKey, addDays, isoOf } from "@/lib/booking/time";
 
@@ -21,18 +21,18 @@ describe("booking transaction", () => {
   it("prevents double-booking under concurrency (one wins)", async () => {
     const base = { dateISO, startHour: 10, hours: 2 };
     const [r1, r2] = await Promise.all([
-      createPendingBooking({ ...base, name: "A", email: "a@example.com" }),
-      createPendingBooking({ ...base, name: "B", email: "b@example.com" }),
+      createReservation({ ...base, name: "A", email: "a@example.com" }),
+      createReservation({ ...base, name: "B", email: "b@example.com" }),
     ]);
     expect([r1, r2].filter((r) => r.ok).length).toBe(1);
     const rows = await prisma.booking.count({
-      where: { date: day, status: "PENDING" },
+      where: { date: day, status: "RESERVED" },
     });
     expect(rows).toBe(1);
   });
 
   it("rejects overlap incl. reset buffer, allows the next free slot", async () => {
-    const a = await createPendingBooking({
+    const a = await createReservation({
       name: "A",
       email: "a@example.com",
       dateISO,
@@ -41,7 +41,7 @@ describe("booking transaction", () => {
     }); // books 10–12, buffers 9 and 12
     expect(a.ok).toBe(true);
 
-    const inBuffer = await createPendingBooking({
+    const inBuffer = await createReservation({
       name: "B",
       email: "b@example.com",
       dateISO,
@@ -50,7 +50,7 @@ describe("booking transaction", () => {
     }); // 12 is buffer
     expect(inBuffer.ok).toBe(false);
 
-    const afterBuffer = await createPendingBooking({
+    const afterBuffer = await createReservation({
       name: "C",
       email: "c@example.com",
       dateISO,

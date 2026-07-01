@@ -496,15 +496,18 @@ button.cell:focus-visible{ outline:2px solid var(--marigold); outline-offset:2px
 .bacs-row dd{ font-family:var(--mono); font-size:.98rem; letter-spacing:.02em; color:var(--paper); font-variant-numeric:tabular-nums; text-align:right; }
 .bacs-row.ref dd{ color:var(--marigold); font-weight:700; }
 .bacs-row.amt dd{ font-family:var(--serif); font-size:1.35rem; font-weight:420; color:var(--marigold); letter-spacing:-.01em; }
-.pay-note{ font-family:var(--mono); font-size:.66rem; line-height:1.7; letter-spacing:.03em; color:var(--oat-quiet); max-width:56ch; }
-.pay-note strong{ color:var(--oat-dim); font-weight:700; }
+/* step-4 lede — the instruction the guest actually needs to read, so serif +
+   readable rather than a tiny mono footnote. */
+.pay-note{ font-family:var(--serif); font-weight:360; font-size:1.02rem; line-height:1.6; color:var(--oat-dim); max-width:58ch; font-variation-settings:"opsz" 24; }
+.pay-note strong{ color:var(--paper); font-weight:480; }
+.len-hint{ font-family:var(--mono); font-size:.64rem; line-height:1.6; letter-spacing:.04em; color:var(--oat-quiet); max-width:48ch; }
 .pay-btn{ justify-self:start; }
 
 /* confirmation modal — shown once a reservation is placed */
 .modal{ position:fixed; inset:0; z-index:200; display:grid; place-items:center; padding:clamp(1rem,4vw,2rem); }
 .modal[hidden]{ display:none; }
 .modal-backdrop{ position:absolute; inset:0; background:rgba(12,8,4,.74); -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px); }
-.modal-card{ position:relative; z-index:1; width:min(640px,100%); max-height:90vh; overflow:auto; background:var(--umber-2); border:1px solid rgba(236,228,211,.16); box-shadow:0 30px 80px rgba(0,0,0,.5); animation:modal-in .35s cubic-bezier(.2,.7,.2,1); }
+.modal-card{ position:relative; z-index:1; width:min(640px,100%); max-height:90vh; overflow:auto; background:var(--umber-2); border:1px solid var(--marigold); box-shadow:0 0 0 1px rgba(217,131,36,.25), 0 30px 80px rgba(0,0,0,.55); animation:modal-in .35s cubic-bezier(.2,.7,.2,1); }
 @keyframes modal-in{ from{ opacity:0; transform:translateY(14px) scale(.985); } to{ opacity:1; transform:none; } }
 .modal-close{ position:absolute; top:.5rem; right:.5rem; z-index:2; width:44px; height:44px; display:grid; place-items:center; font-size:1.9rem; line-height:1; color:var(--oat-dim); transition:color .2s ease; }
 .modal-close:hover{ color:var(--paper); }
@@ -527,6 +530,15 @@ button.cell:focus-visible{ outline:2px solid var(--marigold); outline-offset:2px
 .booked-fine{ font-family:var(--mono); font-size:.68rem; line-height:1.7; letter-spacing:.03em; color:var(--oat-quiet); }
 .booked-fine a{ color:var(--marigold); border-bottom:1px solid rgba(217,131,36,.4); padding-bottom:1px; }
 .booked-fine a:hover{ border-bottom-color:var(--marigold); }
+/* the bank-transfer panel inside the confirmation modal (reuses .bacs) */
+.modal-bacs{ margin:0; }
+/* the one instruction that must read clearly — serif, not a mono footnote */
+.pay-instruct{ font-family:var(--serif); font-weight:380; font-size:1.05rem; line-height:1.55; color:var(--paper); font-variation-settings:"opsz" 24; }
+.pay-instruct strong{ color:var(--marigold); font-weight:520; white-space:nowrap; }
+.modal-actions{ display:flex; flex-wrap:wrap; gap:.7rem; align-items:center; }
+.modal-actions .btn{ flex:1 1 auto; justify-content:center; }
+.modal-actions .ghost{ flex:0 0 auto; }
+@media (max-width:520px){ .modal-actions .btn,.modal-actions .ghost{ flex:1 1 100%; } }
 
 /* ── §05 the practical part — changeover + rates + policies + map, one section ── */
 .practical{ background:var(--paper); }
