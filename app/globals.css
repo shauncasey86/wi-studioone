@@ -436,16 +436,19 @@ button.cell:focus-visible{ outline:2px solid var(--marigold); outline-offset:2px
 .time[aria-pressed="true"]{ background:var(--marigold); border-color:var(--marigold); color:var(--umber-3); font-weight:700; }
 .times-empty{ font-family:var(--serif); font-style:italic; font-size:1.05rem; line-height:1.5; color:var(--oat-dim); max-width:46ch; }
 
-/* step 3 — length: an hourly stepper (minus / read-out / plus) */
-.length{ display:grid; gap:1.3rem; }
-.stepper{ display:flex; align-items:center; gap:1.1rem; max-width:460px; }
-.lstep{ appearance:none; -webkit-appearance:none; width:54px; height:54px; flex:0 0 auto; display:grid; place-items:center; font-family:var(--serif); font-size:1.9rem; line-height:1; color:var(--paper); border:1px solid rgba(236,228,211,.3); background:rgba(236,228,211,.04); border-radius:50%; cursor:pointer; transition:background .2s ease, border-color .2s ease, opacity .2s ease; }
+/* step 3 — length: a single clean stepper (minus / read-out / plus) with the
+   live price beneath. Length is the hero; the window + running total sit below. */
+.length{ display:grid; gap:1rem; justify-items:center; }
+.stepper{ display:flex; align-items:center; justify-content:space-between; gap:1.3rem; width:100%; max-width:420px; }
+.lstep{ appearance:none; -webkit-appearance:none; width:58px; height:58px; flex:0 0 auto; display:grid; place-items:center; font-family:var(--serif); font-size:2rem; line-height:1; color:var(--paper); border:1px solid rgba(236,228,211,.3); background:rgba(236,228,211,.04); border-radius:50%; cursor:pointer; transition:background .2s ease, border-color .2s ease, opacity .2s ease; }
 .lstep:hover{ background:var(--glow); border-color:var(--marigold); }
 .lstep:focus-visible{ outline:2px solid var(--marigold); outline-offset:2px; }
 .lstep:disabled{ opacity:.28; pointer-events:none; }
-.lread{ flex:1; display:grid; gap:.25rem; }
-.lspan{ font-family:var(--serif); font-weight:420; font-size:clamp(1.5rem,2.4vw,1.9rem); letter-spacing:-.01em; color:var(--paper); font-variation-settings:"opsz" 32; }
-.lmeta{ font-family:var(--mono); font-size:.64rem; letter-spacing:.1em; text-transform:uppercase; color:var(--oat-dim); }
+.lread{ flex:1; display:grid; gap:.35rem; text-align:center; }
+.lspan{ font-family:var(--serif); font-weight:420; font-size:clamp(1.7rem,2.8vw,2.15rem); line-height:1; letter-spacing:-.015em; color:var(--paper); font-variation-settings:"opsz" 36; }
+.lmeta{ font-family:var(--mono); font-size:.72rem; letter-spacing:.06em; color:var(--oat-dim); font-variant-numeric:tabular-nums; }
+.lprice{ font-family:var(--serif); font-weight:440; font-size:clamp(2.1rem,4.4vw,3rem); line-height:1; letter-spacing:-.02em; color:var(--marigold); font-variation-settings:"opsz" 48; }
+.lprice::before{ content:"Total"; display:block; font-family:var(--mono); font-weight:400; font-size:.58rem; letter-spacing:.22em; text-transform:uppercase; color:var(--oat-quiet); margin-bottom:.5rem; }
 .len-note{ font-family:var(--mono); font-size:.66rem; line-height:1.65; letter-spacing:.04em; color:var(--oat-quiet); max-width:44ch; }
 .len-note[hidden]{ display:none; }
 .len-note a{ color:var(--marigold); border-bottom:1px solid rgba(217,131,36,.4); padding-bottom:1px; transition:border-color .2s ease; }
@@ -455,6 +458,9 @@ button.cell:focus-visible{ outline:2px solid var(--marigold); outline-offset:2px
 .bookbar{ display:grid; grid-template-columns:1fr auto; gap:1.5rem; align-items:center; margin-top:2rem; padding:1.5rem clamp(1rem,2vw,1.5rem) 0; border-top:1px solid rgba(236,228,211,.12); }
 @media (max-width:760px){ .bookbar{ grid-template-columns:1fr; } }
 .summary{ display:flex; gap:1rem; align-items:baseline; flex-wrap:wrap; font-family:var(--serif); font-weight:360; font-size:clamp(1.05rem,1.3vw,1.25rem); color:var(--paper); font-variation-settings:"opsz" 28; }
+/* once a slot is chosen the stepper carries the read-out, so the bar's summary
+   is emptied — collapse it rather than leave a gap next to the buttons. */
+.summary:empty{ display:none; }
 .summary .empty{ color:var(--oat-dim); font-style:italic; }
 .summary strong{ font-family:var(--serif); font-weight:420; font-size:clamp(1.5rem,2vw,2rem); color:var(--marigold); letter-spacing:-.015em; }
 .bact{ display:flex; gap:.7rem; flex-wrap:wrap; }
