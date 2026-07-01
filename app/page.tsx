@@ -16,7 +16,7 @@ import { getSiteData } from "@/lib/site-data";
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const { settings } = await getSiteData();
+  const { settings, map } = await getSiteData();
   return (
     <>
       {/* custom cursor — enhanced by SiteEffects on fine pointers */}
@@ -40,7 +40,7 @@ export default async function Home() {
 
       <Footer />
 
-      <SiteEffects />
+      <SiteEffects lat={map.lat} lng={map.lng} />
     </>
   );
 }

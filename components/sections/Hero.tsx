@@ -65,7 +65,9 @@ export default async function Hero() {
                   x2="820"
                   y2="470"
                 ></line>
+                <path id="arc-daylight" className="arc-daylight"></path>
                 <g id="arc-ticks"></g>
+                <g id="arc-suntimes"></g>
                 <path id="arc-track" className="arc-track"></path>
                 <g id="arc-booked-g"></g>
                 <path id="arc-elapsed" className="arc-elapsed"></path>

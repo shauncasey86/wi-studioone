@@ -11,8 +11,19 @@ export default async function Footer() {
         <div className="foot-grid">
           <div>
             <a className="mark" href="#top">
-              {brand.lead}
-              <span className="hr">{brand.mark}</span>
+              {brand.logoUrl?.trim() ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  className="mark-logo"
+                  src={brand.logoUrl.trim()}
+                  alt={brand.logoAlt?.trim() || "StudioONE"}
+                />
+              ) : (
+                <>
+                  {brand.lead}
+                  <span className="hr">{brand.mark}</span>
+                </>
+              )}
             </a>
             <p className="lede">{footer.lede}</p>
           </div>

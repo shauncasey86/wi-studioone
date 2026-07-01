@@ -25,6 +25,7 @@ export const getSiteData = cache(async () => {
     howSteps,
     policies,
     roomFacts,
+    roomPhotos,
     changeoverItems,
     navItems,
     footerColumns,
@@ -37,6 +38,7 @@ export const getSiteData = cache(async () => {
     prisma.howStep.findMany({ orderBy: { order: "asc" } }),
     prisma.policy.findMany({ orderBy: { order: "asc" } }),
     prisma.roomFact.findMany({ orderBy: { order: "asc" } }),
+    prisma.roomPhoto.findMany({ orderBy: { order: "asc" } }),
     prisma.changeoverItem.findMany({ orderBy: { order: "asc" } }),
     prisma.navItem.findMany({ orderBy: { order: "asc" } }),
     prisma.footerColumn.findMany({ orderBy: { order: "asc" } }),
@@ -55,6 +57,7 @@ export const getSiteData = cache(async () => {
     howSteps,
     policies,
     roomFacts,
+    roomPhotos,
     changeoverItems,
     navItems,
     footerColumns: footerColumns.map((c) => ({

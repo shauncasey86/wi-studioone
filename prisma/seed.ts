@@ -19,6 +19,7 @@ import {
   defaultKinds as kinds,
   defaultHowSteps as howSteps,
   defaultRoomFacts as roomFacts,
+  defaultRoomPhotos as roomPhotos,
   defaultChangeoverItems as changeoverItems,
   defaultPolicies as policies,
   defaultFooterColumns as footerColumns,
@@ -102,6 +103,11 @@ async function main() {
     prisma.roomFact.deleteMany(),
     prisma.roomFact.createMany({
       data: roomFacts.map((f, order) => ({ ...f, order })),
+    }),
+
+    prisma.roomPhoto.deleteMany(),
+    prisma.roomPhoto.createMany({
+      data: roomPhotos.map((p, order) => ({ ...p, order })),
     }),
 
     prisma.changeoverItem.deleteMany(),

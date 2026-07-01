@@ -156,6 +156,53 @@ export default function BookingDiary({ config }: { config: DiaryConfig }) {
     const ac = new AbortController();
     const signal = ac.signal;
 
+    /* ── confirmation modal ── */
+    const modal = $("book-modal"),
+      modalBody = $("book-modal-body"),
+      modalCard = $("book-modal-card"),
+      modalClose = $("book-modal-close"),
+      modalBackdrop = $("book-modal-backdrop");
+    let lastFocus: HTMLElement | null = null;
+    const closeModal = () => {
+      if (!modal || modal.hidden) return;
+      modal.hidden = true;
+      if (lastFocus && document.contains(lastFocus))
+        lastFocus.focus({ preventScroll: true });
+    };
+    const openModal = () => {
+      if (!modal) return;
+      lastFocus = document.activeElement as HTMLElement | null;
+      modal.hidden = false;
+      (modalClose || modalCard)?.focus({ preventScroll: true });
+    };
+    if (modalClose)
+      modalClose.addEventListener("click", closeModal, { signal });
+    if (modalBackdrop)
+      modalBackdrop.addEventListener("click", closeModal, { signal });
+    document.addEventListener(
+      "keydown",
+      (e) => {
+        if (modal && !modal.hidden && e.key === "Escape") closeModal();
+        // keep Tab focus within the open dialog
+        if (modal && !modal.hidden && e.key === "Tab" && modalCard) {
+          const f = modalCard.querySelectorAll<HTMLElement>(
+            'a[href],button:not([disabled]),input,[tabindex]:not([tabindex="-1"])',
+          );
+          if (!f.length) return;
+          const first = f[0],
+            last = f[f.length - 1];
+          if (e.shiftKey && document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          } else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      },
+      { signal },
+    );
+
     const dateFor = (d: number) => {
       const x = new Date(today);
       x.setDate(today.getDate() + d);
@@ -709,12 +756,11 @@ export default function BookingDiary({ config }: { config: DiaryConfig }) {
       end: string;
       price: number;
     }) => {
-      const box = rootRef.current;
-      if (box) {
-        box.innerHTML =
+      if (modalBody) {
+        modalBody.innerHTML =
           '<div class="booked">' +
           '<span class="booked-k">Awaiting payment</span>' +
-          "<h3>Thanks, " +
+          '<h3 id="book-modal-title">Thanks, ' +
           esc(p.name) +
           ". <em>Almost there.</em></h3>" +
           "<p>We’ve let the studio know to look out for your transfer. The moment it clears — usually the same working day — your door code lands by email at <strong>" +
@@ -755,6 +801,7 @@ export default function BookingDiary({ config }: { config: DiaryConfig }) {
           encodeURIComponent("Booking " + p.reference + " — StudioONE") +
           '">Message the studio</a>.</p>' +
           "</div>";
+        openModal();
       }
       if (summary)
         summary.innerHTML =
@@ -801,6 +848,22 @@ export default function BookingDiary({ config }: { config: DiaryConfig }) {
                 start: hourLabel(startIdx),
                 end: hourLabel(endIdx),
                 price: (res.amountPence ?? priceFor(hours) * 100) / 100,
+              });
+              // Reset the picker beneath the modal to reflect the new booking,
+              // and restore the confirm button for the next reservation.
+              payBtn.removeAttribute("aria-disabled");
+              payBtn.innerHTML =
+                'Reserve the room <span class="ar" aria-hidden="true">→</span>';
+              if (nameInput) nameInput.value = "";
+              if (emailInput) emailInput.value = "";
+              if (confirmBtn)
+                confirmBtn.innerHTML =
+                  'Continue to payment <span class="ar" aria-hidden="true">→</span>';
+              fetchAvailability().then((d) => {
+                BOOKINGS = d || {};
+                build();
+                buildDays();
+                chooseDay(dayIdx);
               });
             } else {
               payBtn.removeAttribute("aria-disabled");
@@ -1048,6 +1111,30 @@ export default function BookingDiary({ config }: { config: DiaryConfig }) {
           </div>
         </div>
       </div>
+
+      {/* confirmation modal — filled + shown by renderPending() */}
+      <div className="modal" id="book-modal" hidden>
+        <div className="modal-backdrop" id="book-modal-backdrop"></div>
+        <div
+          className="modal-card"
+          id="book-modal-card"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="book-modal-title"
+          tabIndex={-1}
+        >
+          <button
+            type="button"
+            className="modal-close"
+            id="book-modal-close"
+            aria-label="Close confirmation"
+          >
+            <span aria-hidden="true">×</span>
+          </button>
+          <div id="book-modal-body"></div>
+        </div>
+      </div>
+
       <p className="vh" id="book-live" role="status" aria-live="polite"></p>
     </>
   );

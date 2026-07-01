@@ -121,6 +121,14 @@ model MediaAsset {
   createdAt DateTime @default(now())
 }
 
+// Photos of the building/room — a reorderable list rendered in the room band.
+model RoomPhoto {
+  id    String @id @default(cuid())
+  order Int
+  url   String
+  alt   String @default("")
+}
+
 enum BookingStatus {
   PENDING
   CONFIRMED
