@@ -42,6 +42,18 @@ chased for unpaid holds:
   from `crypto.randomBytes` + a UUID fallback, uniqueness re-checked in the
   create transaction (`generateReference` in `service.ts`).
 
+Second round of tweaks:
+
+- **Length step simplified** — the 1h/2h/half/full presets are gone; picking a
+  start time drops straight to a single −/+ hours stepper (any length, 1–8h).
+- **Modal fits one screen** — condensed to kicker + heading + one line + the
+  bank panel (slot folded into its header) + actions; no scroll at laptop
+  heights (measured scrollHeight == clientHeight).
+- **Provisional-booking email** — claiming payment now also sends the guest a
+  branded "We've got your booking" receipt (`sendPendingReceipt`) with the slot,
+  reference and amount, so they have confirmation while the studio checks the
+  transfer (`POST /api/bookings/claim`).
+
 ### Full stage plan (from CLAUDE.md §14)
 
 - [x] Phase 0 — Scaffold & repo

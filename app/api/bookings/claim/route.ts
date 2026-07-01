@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { z } from "zod";
+import { prisma } from "@/lib/prisma";
+import { contactSchema } from "@/lib/content";
 import { claimReservation } from "@/lib/booking/service";
 import { rateLimit } from "@/lib/auth";
-import { sendStudioAlert } from "@/lib/email";
+import { sendStudioAlert, sendPendingReceipt } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -42,9 +44,20 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: result.error }, { status: 404 });
   }
 
-  // Alert the studio only on the first claim (never includes the door code).
-  // Don't fail the guest's request if email errors — the row is already PENDING.
+  // Only on the first claim: alert the studio and send the guest a "we've got
+  // it" receipt so they have something confirming the provisional booking.
+  // Never fail the guest's request on email errors — the row is already PENDING.
   if (result.alerted) {
+    let replyTo: string | undefined;
+    try {
+      const settings = await prisma.siteSettings.findUniqueOrThrow({
+        where: { id: 1 },
+      });
+      const contact = contactSchema.safeParse(settings.contact);
+      if (contact.success) replyTo = contact.data.email;
+    } catch {
+      // contact lookup is best-effort; the receipt still sends without a reply-to
+    }
     try {
       await sendStudioAlert({
         name: result.name,
@@ -58,6 +71,20 @@ export async function POST(req: Request) {
       });
     } catch (e) {
       console.error("[bookings/claim] studio alert failed", e);
+    }
+    try {
+      await sendPendingReceipt({
+        to: result.email,
+        name: result.name,
+        day: result.day,
+        start: result.start,
+        end: result.end,
+        amountPence: result.amountPence,
+        reference: result.reference,
+        replyTo,
+      });
+    } catch (e) {
+      console.error("[bookings/claim] pending receipt failed", e);
     }
   }
 

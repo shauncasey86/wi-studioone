@@ -143,7 +143,6 @@ export default function BookingDiary({ config }: { config: DiaryConfig }) {
       msgBtn = $("message-host"),
       pickDays = $("pick-days"),
       pickTimes = $("pick-times"),
-      pickPresets = $("pick-presets"),
       stepTime = $("step-time"),
       stepLength = $("step-length"),
       lenMinus = $("len-minus") as HTMLButtonElement | null,
@@ -488,56 +487,12 @@ export default function BookingDiary({ config }: { config: DiaryConfig }) {
             ? "true"
             : "false",
         );
-      buildPresets(d, i);
       if (stepLength) (stepLength as HTMLElement).hidden = false;
       updateLength();
       summarize();
     };
 
-    /* ════ step 3 · how long (presets + hourly stepper) ════ */
-    const buildPresets = (d: number, i: number) => {
-      if (!pickPresets) return;
-      pickPresets.innerHTML = "";
-      const cap = maxEnd(d, i),
-        defs: [string, number][] = [
-          ["1 hour", 1],
-          ["2 hours", 2],
-          ["Half day", 4],
-          ["Full day", 8],
-        ];
-      for (let p = 0; p < defs.length; p++) {
-        const hours = defs[p][1];
-        if (i + hours > cap) continue;
-        const b = document.createElement("button");
-        b.type = "button";
-        b.className = "preset";
-        b.dataset.hours = String(hours);
-        b.setAttribute("aria-pressed", "false");
-        b.setAttribute(
-          "aria-label",
-          defs[p][0] + ", " + money(priceFor(hours)),
-        );
-        b.innerHTML =
-          defs[p][0] +
-          ' <span class="pp">' +
-          money(priceFor(hours)) +
-          "</span>";
-        b.addEventListener(
-          "click",
-          (ev) => setLength(+(ev.currentTarget as HTMLElement).dataset.hours!),
-          { signal },
-        );
-        pickPresets.appendChild(b);
-      }
-    };
-    const setLength = (hours: number) => {
-      if (sel.start === null) return;
-      const cap = maxEnd(sel.dayIdx!, sel.start);
-      sel.end = Math.min(Math.max(sel.start + hours, sel.start + MIN_RUN), cap);
-      closePay();
-      updateLength();
-      summarize();
-    };
+    /* ════ step 3 · how long (hourly stepper only) ════ */
     const stepLen = (dir: number) => {
       if (sel.start === null) return;
       const ne = sel.end! + dir;
@@ -559,14 +514,6 @@ export default function BookingDiary({ config }: { config: DiaryConfig }) {
       if (lenPlus)
         lenPlus.disabled = sel.end! >= maxEnd(sel.dayIdx!, sel.start);
       if (lenNote) (lenNote as HTMLElement).hidden = hours < MAX_RUN;
-      if (pickPresets) {
-        const ps = pickPresets.querySelectorAll<HTMLElement>(".preset");
-        for (let k = 0; k < ps.length; k++)
-          ps[k].setAttribute(
-            "aria-pressed",
-            +ps[k].dataset.hours! === hours ? "true" : "false",
-          );
-      }
     };
     if (lenMinus)
       lenMinus.addEventListener("click", () => stepLen(-1), { signal });
@@ -771,7 +718,7 @@ export default function BookingDiary({ config }: { config: DiaryConfig }) {
     const renderClaimed = (p: Pending) => {
       if (!modalBody) return;
       modalBody.innerHTML =
-        '<div class="booked">' +
+        '<div class="booked booked--modal">' +
         '<span class="booked-k">Payment noted — thank you</span>' +
         '<h3 id="book-modal-title">That’s with us now.</h3>' +
         "<p>Thanks, " +
@@ -815,27 +762,23 @@ export default function BookingDiary({ config }: { config: DiaryConfig }) {
           ? '<span class="demo">Demo details</span>'
           : "";
         modalBody.innerHTML =
-          '<div class="booked">' +
-          '<span class="booked-k">Slot held — awaiting your payment</span>' +
-          '<h3 id="book-modal-title">Thanks, ' +
+          '<div class="booked booked--modal">' +
+          '<span class="booked-k">Slot held — pay to confirm</span>' +
+          '<h3 id="book-modal-title">Almost there, ' +
           esc(p.name) +
-          ". <em>Almost there.</em></h3>" +
-          "<p>Your slot is held. Make the bank transfer below, then press " +
-          "<strong>I’ve sent the payment</strong> so the studio knows to look " +
-          "out for it. Your door code lands by email at <strong>" +
+          ".</h3>" +
+          "<p>Send the transfer below, then press <strong>I’ve sent the " +
+          "payment</strong>. Your door code emails to <strong>" +
           esc(p.email) +
-          "</strong> once it clears — usually the same working day.</p>" +
-          '<dl class="booked-meta">' +
-          "<div><dt>Slot</dt><dd>" +
+          "</strong> once it clears.</p>" +
+          '<dl class="bacs modal-bacs">' +
+          '<div class="bacs-h"><span>Bank transfer · ' +
           esc(p.day) +
-          " · " +
+          " " +
           p.start +
           "–" +
           p.end +
-          "</dd></div>" +
-          "</dl>" +
-          '<dl class="bacs modal-bacs">' +
-          '<div class="bacs-h"><span>Bank transfer</span>' +
+          "</span>" +
           demo +
           "</div>" +
           '<div class="bacs-row"><dt>Account name</dt><dd>' +
@@ -854,19 +797,10 @@ export default function BookingDiary({ config }: { config: DiaryConfig }) {
           money(p.price) +
           "</dd></div>" +
           "</dl>" +
-          '<p class="pay-instruct">Send <strong>' +
-          money(p.price) +
-          "</strong> to the account above using reference <strong>" +
-          esc(p.reference) +
-          "</strong> — that’s how we match your payment to this booking.</p>" +
           '<div class="modal-actions">' +
           '<button type="button" class="btn" id="paid-confirm">I’ve sent the payment <span class="ar" aria-hidden="true">→</span></button>' +
           '<button type="button" class="ghost" data-modal-dismiss>Close</button>' +
           "</div>" +
-          '<p class="booked-fine">Something to ask first? ' +
-          '<a href="mailto:hello@studioone.room?subject=' +
-          encodeURIComponent("Booking " + p.reference + " — StudioONE") +
-          '">Message the studio</a>.</p>' +
           "</div>";
         wireDismiss();
         const paidBtn =
@@ -1058,16 +992,6 @@ export default function BookingDiary({ config }: { config: DiaryConfig }) {
               <fieldset className="sblock" id="step-length" hidden>
                 <legend className="sblock-h">How long</legend>
                 <div className="length">
-                  <div
-                    className="presets"
-                    id="pick-presets"
-                    role="group"
-                    aria-label="Common lengths"
-                  ></div>
-                  <p className="len-hint">
-                    Common lengths — or use −&nbsp;/&nbsp;+ below to book any
-                    number of hours, up to eight.
-                  </p>
                   <div className="stepper">
                     <button
                       type="button"
