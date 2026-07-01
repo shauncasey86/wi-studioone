@@ -12,7 +12,13 @@ import PageHeader from "@/components/admin/PageHeader";
 
 export const dynamic = "force-dynamic";
 
-const STATUSES = ["PENDING", "CONFIRMED", "CANCELLED", "EXPIRED"] as const;
+const STATUSES = [
+  "RESERVED",
+  "PENDING",
+  "CONFIRMED",
+  "CANCELLED",
+  "EXPIRED",
+] as const;
 type Status = (typeof STATUSES)[number];
 
 const DOW = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -75,7 +81,7 @@ export default async function BookingsPage({
             The <em>diary.</em>
           </>
         }
-        lede="Confirm a paid booking to email the guest their door code. Cancel to free the slot."
+        lede="Reserved = slot held while the guest arranges payment. Pending = the guest says they've paid — check the transfer, then confirm to email their door code. Cancel to free the slot."
       />
 
       <nav className="admin-filters" aria-label="Filter bookings">
@@ -131,7 +137,7 @@ export default async function BookingsPage({
                   {titleCase(b.status)}
                 </span>
                 <div className="admin-booking-ops">
-                  {b.status === "PENDING" && (
+                  {(b.status === "PENDING" || b.status === "RESERVED") && (
                     <form action={confirmBooking.bind(null, b.id)}>
                       <button className="btn" type="submit">
                         Confirm &amp; email code
@@ -145,7 +151,9 @@ export default async function BookingsPage({
                       </button>
                     </form>
                   )}
-                  {(b.status === "PENDING" || b.status === "CONFIRMED") && (
+                  {(b.status === "RESERVED" ||
+                    b.status === "PENDING" ||
+                    b.status === "CONFIRMED") && (
                     <form action={cancelBooking.bind(null, b.id)}>
                       <button className="btn ghost" type="submit">
                         Cancel

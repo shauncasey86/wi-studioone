@@ -10,9 +10,37 @@
 ## Status
 
 - **Stages complete:** Phase 0–6 — **build complete.**
-- **Stage just finished:** Phase 6 (Harden + ship).
+- **Stage just finished:** Client change-requests on the booking/payment flow
+  (see "Change requests" below).
 - **Stage next:** none — project build done. Remaining items are owner config
   (see "Go-live checklist") and any future change requests.
+
+## Change requests (post-launch)
+
+Booking journey now has an explicit **payment-claim** step so the studio isn't
+chased for unpaid holds:
+
+- **New `RESERVED` status** (migrations `payment_claim_flow` +
+  `reserved_default`, plus `Booking.paidClaimedAt`). Reserving holds the slot as
+  `RESERVED` and **does not** alert the studio. The guest presses **"I've sent
+  the payment"** on the modal → `POST /api/bookings/claim` flips it to `PENDING`
+  and fires the studio alert (once). Confirm → `CONFIRMED` + door code, as
+  before. Stale `RESERVED` holds expire after `pendingTtlHrs`; `PENDING` (claimed)
+  never auto-expires. `service.ts`: `createReservation` / `claimReservation` /
+  `expireStaleReservations`. Availability counts all of RESERVED/PENDING/CONFIRMED.
+- **Cancellations email the guest** (`sendCancellation`) and **all emails are
+  restyled** to the app's umber/oat/marigold look (`lib/email.ts`, shared
+  `emailShell`).
+- **Booking box:** duplicate price removed from the length stepper; a hint makes
+  the hourly stepper (any length, not just the presets) discoverable; the step-4
+  "Pay by bank transfer" box is gone and its note is now a readable serif lede.
+- **Modal:** marigold border + explicit Close/Done buttons; the reference and
+  amount moved into the bank-details panel; the pay instruction is readable serif.
+- **Admin:** bookings list + confirm/cancel handle `RESERVED`; the "Awaiting
+  confirmation" dashboard stat still counts only `PENDING` (payment-claimed).
+- **Payment reference:** unchanged — `{referencePrefix}-XXXXXX`, six A–Z0–9 chars
+  from `crypto.randomBytes` + a UUID fallback, uniqueness re-checked in the
+  create transaction (`generateReference` in `service.ts`).
 
 ### Full stage plan (from CLAUDE.md §14)
 

@@ -821,6 +821,10 @@ a.admin-stat:hover {
   border: 1px solid currentColor;
   white-space: nowrap;
 }
+.admin-status[data-status="reserved"] {
+  color: var(--moss);
+  background: rgba(81, 89, 69, 0.12);
+}
 .admin-status[data-status="pending"] {
   color: var(--clay-deep);
   background: rgba(217, 131, 36, 0.12);

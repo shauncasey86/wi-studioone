@@ -130,7 +130,8 @@ model RoomPhoto {
 }
 
 enum BookingStatus {
-  PENDING
+  RESERVED // slot held while the guest arranges their transfer; studio not alerted yet
+  PENDING // guest has told us the payment is sent; awaiting the studio's bank-check
   CONFIRMED
   CANCELLED
   EXPIRED
@@ -146,8 +147,9 @@ model Booking {
   hours       Int
   pricePence  Int
   reference   String        @unique
-  status      BookingStatus @default(PENDING)
+  status      BookingStatus @default(RESERVED)
   createdAt   DateTime      @default(now())
+  paidClaimedAt DateTime? // when the guest pressed "I've sent the payment"
   confirmedAt DateTime?
   cancelledAt DateTime?
   codeSentAt  DateTime?

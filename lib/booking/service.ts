@@ -51,11 +51,18 @@ export function priceFor(cfg: BookingConfig, hours: number): number {
   return Math.round(hours * base);
 }
 
-/** Lazily mark long-pending bookings as expired so their slots free up. */
-export async function expirePending(cfg: BookingConfig): Promise<void> {
+/**
+ * Lazily expire stale RESERVED holds so their slots free up. A reservation only
+ * holds the slot while the guest arranges their transfer; if they never tell us
+ * the payment is sent, the hold lapses after `pendingTtlHrs`. Once a booking is
+ * PENDING (the guest has claimed payment) it is left for the studio to resolve.
+ */
+export async function expireStaleReservations(
+  cfg: BookingConfig,
+): Promise<void> {
   const cutoff = new Date(Date.now() - cfg.pendingTtlHrs * 3600_000);
   await prisma.booking.updateMany({
-    where: { status: "PENDING", createdAt: { lt: cutoff } },
+    where: { status: "RESERVED", createdAt: { lt: cutoff } },
     data: { status: "EXPIRED" },
   });
 }
@@ -72,7 +79,7 @@ async function occupantsForWindow(
     client.booking.findMany({
       where: {
         date: { gte: today, lt: end },
-        status: { in: ["CONFIRMED", "PENDING"] },
+        status: { in: ["CONFIRMED", "PENDING", "RESERVED"] },
       },
       select: { date: true, startHour: true, endHour: true },
     }),
@@ -116,7 +123,7 @@ export async function getAvailabilityWindow(): Promise<
   Record<number, { s: string; e: string; label: string }[]>
 > {
   const cfg = await getBookingConfig();
-  await expirePending(cfg);
+  await expireStaleReservations(cfg);
   const { today, map } = await occupantsForWindow(cfg);
   const out: Record<number, { s: string; e: string; label: string }[]> = {};
   for (let off = 0; off < cfg.daysAhead; off++) {
@@ -161,12 +168,16 @@ export type CreateResult =
     }
   | { ok: false; error: "unavailable" | "invalid" };
 
-/** Create a PENDING booking, re-checking availability inside a transaction. */
-export async function createPendingBooking(
+/**
+ * Create a RESERVED booking, re-checking availability inside a transaction. The
+ * slot is held immediately but the studio is not alerted — that happens when the
+ * guest claims payment (see `claimReservation`).
+ */
+export async function createReservation(
   input: CreateInput,
 ): Promise<CreateResult> {
   const cfg = await getBookingConfig();
-  await expirePending(cfg);
+  await expireStaleReservations(cfg);
 
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(input.dateISO);
   if (!m) return { ok: false, error: "invalid" };
@@ -194,7 +205,10 @@ export async function createPendingBooking(
         // gather this date's occupants inside the transaction
         const [bookings, blocks, holds] = await Promise.all([
           tx.booking.findMany({
-            where: { date, status: { in: ["CONFIRMED", "PENDING"] } },
+            where: {
+              date,
+              status: { in: ["CONFIRMED", "PENDING", "RESERVED"] },
+            },
             select: { startHour: true, endHour: true },
           }),
           tx.block.findMany({
@@ -236,7 +250,7 @@ export async function createPendingBooking(
             hours: input.hours,
             pricePence,
             reference: ref,
-            status: "PENDING",
+            status: "RESERVED",
           },
         });
         return ref;
@@ -260,4 +274,53 @@ export async function createPendingBooking(
     // serialization failure / unique clash under race → treat as unavailable
     return { ok: false, error: "unavailable" };
   }
+}
+
+export type ClaimResult =
+  | {
+      ok: true;
+      /** True only when this call flipped RESERVED→PENDING (so alert once). */
+      alerted: boolean;
+      name: string;
+      email: string;
+      day: string;
+      start: string;
+      end: string;
+      hours: number;
+      amountPence: number;
+      reference: string;
+    }
+  | { ok: false; error: "not_found" | "cancelled" | "expired" };
+
+/**
+ * Mark a reservation as payment-claimed: the guest has told us they've sent the
+ * transfer. Flips RESERVED→PENDING atomically (so a double-click alerts the
+ * studio only once) and reports whether this call was the transition, so the
+ * caller can send the studio alert exactly once.
+ */
+export async function claimReservation(
+  reference: string,
+): Promise<ClaimResult> {
+  const booking = await prisma.booking.findUnique({ where: { reference } });
+  if (!booking) return { ok: false, error: "not_found" };
+  if (booking.status === "CANCELLED") return { ok: false, error: "cancelled" };
+  if (booking.status === "EXPIRED") return { ok: false, error: "expired" };
+
+  const res = await prisma.booking.updateMany({
+    where: { reference, status: "RESERVED" },
+    data: { status: "PENDING", paidClaimedAt: new Date() },
+  });
+
+  return {
+    ok: true,
+    alerted: res.count > 0,
+    name: booking.name,
+    email: booking.email,
+    day: isoOf(booking.date),
+    start: hhmm(booking.startHour),
+    end: hhmm(booking.endHour),
+    hours: booking.hours,
+    amountPence: booking.pricePence,
+    reference: booking.reference,
+  };
 }
