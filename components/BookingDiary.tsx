@@ -149,6 +149,7 @@ export default function BookingDiary({ config }: { config: DiaryConfig }) {
       lenPlus = $("len-plus") as HTMLButtonElement | null,
       lenSpan = $("len-span"),
       lenMeta = $("len-meta"),
+      lenPrice = $("len-price"),
       lenNote = $("len-note");
     const stepPay = $("step-pay"),
       nameInput = $("bk-name") as HTMLInputElement | null,
@@ -506,10 +507,14 @@ export default function BookingDiary({ config }: { config: DiaryConfig }) {
     const updateLength = () => {
       if (sel.start === null) return;
       const hours = sel.end! - sel.start;
-      if (lenSpan)
-        lenSpan.textContent = hourLabel(sel.start) + "–" + hourLabel(sel.end!);
-      // Price lives in the summary bar below — don't repeat it here.
-      if (lenMeta) lenMeta.textContent = dur(hours);
+      // The stepper is now the single live read-out: length is the hero, the
+      // resulting window sits under it, and the price updates as you step. The
+      // bottom bar no longer repeats any of this (see summarize()).
+      if (lenSpan) lenSpan.textContent = dur(hours);
+      if (lenMeta)
+        lenMeta.textContent =
+          hourLabel(sel.start) + " – " + hourLabel(sel.end!);
+      if (lenPrice) lenPrice.textContent = money(priceFor(hours));
       if (lenMinus) lenMinus.disabled = sel.end! <= sel.start + MIN_RUN;
       if (lenPlus)
         lenPlus.disabled = sel.end! >= maxEnd(sel.dayIdx!, sel.start);
@@ -533,16 +538,10 @@ export default function BookingDiary({ config }: { config: DiaryConfig }) {
       } else {
         const hours = sel.end! - sel.start,
           price = priceFor(hours);
-        vis =
-          "<span>" +
-          hourLabel(sel.start) +
-          "–" +
-          hourLabel(sel.end!) +
-          " · " +
-          dur(hours) +
-          "</span><strong>" +
-          money(price) +
-          "</strong>";
+        // The stepper above already shows the window, length and live price, so
+        // the bar stays out of the way — just the actions. Screen readers still
+        // get the full picture via `say` on the live region.
+        vis = "";
         say =
           dayLong(sel.dayIdx) +
           ", " +
@@ -1006,7 +1005,7 @@ export default function BookingDiary({ config }: { config: DiaryConfig }) {
                         —
                       </span>
                       <span className="lmeta" id="len-meta">
-                        whole hours · one-hour minimum
+                        Use − and + to set the length
                       </span>
                     </div>
                     <button
@@ -1018,6 +1017,7 @@ export default function BookingDiary({ config }: { config: DiaryConfig }) {
                       +
                     </button>
                   </div>
+                  <p className="lprice" id="len-price" aria-hidden="true"></p>
                   <p className="len-note" id="len-note" hidden>
                     Eight hours is the longest single booking. For a full
                     day-plus or a block booking,{" "}
